@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0d1413">
+  <title>Greenroom</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand"><span class="mark" aria-hidden="true"></span><span>Greenroom</span></div>
+    <div class="side-heading"><h2>我的项目</h2><button id="new-project" type="button" class="add" aria-label="新建项目">+</button></div>
+    <nav id="projects" aria-label="项目"></nav>
+    <button id="settings" type="button" class="settings-button">供应商与模型</button>
+  </aside>
+
+  <main>
+    <header class="topbar"><span>本机工作区</span><span id="gateway-status">网关未配置</span></header>
+    <div class="workspace">
+      <section id="welcome" class="welcome">
+        <h1>你的创作工作区</h1>
+        <p>从一个项目开始，把文稿、画面和配音留在同一个地方。</p>
+        <button id="start-project" class="primary" type="button">新建项目</button>
+      </section>
+
+      <section id="studio" hidden>
+        <h1 id="project-title"></h1>
+        <div class="tabs" role="group" aria-label="创作工具">
+          <button type="button" data-kind="text" aria-pressed="true">文字</button>
+          <button type="button" data-kind="image" aria-pressed="false">图片</button>
+          <button type="button" data-kind="audio" aria-pressed="false">音频</button>
+        </div>
+        <form id="compose" class="compose">
+          <label for="prompt" id="prompt-label">创作内容</label>
+          <textarea id="prompt" name="prompt" rows="5" maxlength="12000" placeholder="输入你的创作要求" required></textarea>
+          <div class="fields">
+            <label>供应商<select name="provider" id="provider" required></select></label>
+            <label>模型 ID<input name="model" list="model-list" autocomplete="off" placeholder="选择或输入模型" maxlength="200" required><datalist id="model-list"></datalist></label>
+            <label data-option="text">思考深度<select name="effort"><option value="">模型默认</option><option>none</option><option>minimal</option><option>low</option><option>medium</option><option>high</option><option>xhigh</option><option>max</option></select></label>
+            <label data-option="image" hidden>尺寸<select name="size"><option>1024x1024</option><option>1536x1024</option><option>1024x1536</option></select></label>
+            <label data-option="image" hidden>画质<select name="quality"><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="auto">自动</option></select></label>
+            <label data-option="audio" hidden>音色<input name="voice" value="alloy" maxlength="80"></label>
+          </div>
+          <div class="form-action"><span id="compose-status" class="status" role="status"></span><button type="submit" class="primary" disabled>生成文字</button></div>
+        </form>
+        <section aria-labelledby="history-title" class="history">
+          <h2 id="history-title">创作记录</h2>
+          <div id="history"></div>
+        </section>
+      </section>
+    </div>
+  </main>
+
+  <dialog id="project-dialog">
+    <form id="project-form">
+      <div class="dialog-heading"><h2>新建项目</h2><button type="button" data-close aria-label="关闭">×</button></div>
+      <label>项目名称<input name="name" maxlength="120" required autofocus></label>
+      <div class="form-action"><span class="error status" role="status"></span><button type="submit" class="primary">创建项目</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="provider-dialog">
+    <section class="settings">
+      <div class="dialog-heading"><h2>供应商与模型</h2><button type="button" data-close aria-label="关闭">×</button></div>
+      <label>供应商<select id="provider-edit"></select></label>
+      <form id="provider-form">
+        <div class="fields">
+          <label>名称<input name="name" maxlength="100" required></label>
+          <label>文字协议<select name="protocol"><option value="responses">OpenAI Responses</option><option value="completions">Chat Completions</option></select></label>
+        </div>
+        <label>网关地址<input name="url" type="url" placeholder="https://api.openai.com/v1" required></label>
+        <label>API Key<input name="key" type="password" autocomplete="new-password"></label>
+        <fieldset><legend>可用工具</legend><label><input type="checkbox" name="scope" value="text" checked> 文字</label><label><input type="checkbox" name="scope" value="image" checked> 图片</label><label><input type="checkbox" name="scope" value="audio" checked> 音频</label></fieldset>
+        <label class="check"><input type="checkbox" name="default"> 设为默认网关</label>
+        <div class="form-action"><span id="provider-status" class="status" role="status"></span><button type="submit" class="primary">保存供应商</button></div>
+      </form>
+      <section class="catalog"><div class="dialog-heading"><h3>模型目录</h3><button id="refresh-models" type="button" disabled>刷新</button></div><div id="catalog" aria-live="polite"></div></section>
+    </section>
+  </dialog>
+</body>
+</html>
