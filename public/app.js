@@ -77,10 +77,23 @@ async function loadHistory(project) {
     original.className = 'prompt';
     task.append(original);
     if (row.content) task.append(el('p', row.content));
-    if (row.error) {
-      const error = el('p', row.error);
+    if (row.error || row.query_error) {
+      const error = el('p', row.error ?? row.query_error);
       error.className = 'status error';
       task.append(error);
+    }
+    if (row.status === 'running' && row.upstream_id) {
+      const check = el('button', '查询原任务');
+      check.type = 'button';
+      check.onclick = async () => {
+        check.disabled = true;
+        try {
+          await api('/api/tasks/' + row.id + '/poll', 'POST', {});
+          await loadHistory(project);
+        } catch (error) { status('compose-status', error.message, true); }
+        finally { check.disabled = false; }
+      };
+      task.append(check);
     }
     if (row.mime) {
       const link = '/api/media/' + row.id;
@@ -120,6 +133,8 @@ async function setComposerProviders() {
 async function loadComposerModels() {
   const serial = ++catalogSequence;
   const providerId = get('provider').value;
+  get('background-control').hidden = kind !== 'text'
+    || providerRows.find(row => row.id === providerId)?.protocol !== 'responses';
   modelList.replaceChildren();
   modelField().value = '';
   if (!providerId) {
@@ -156,6 +171,7 @@ compose.onsubmit = async event => {
   const fields = new FormData(compose);
   const options = Object.fromEntries([...compose.querySelectorAll('[data-option="' + kind + '"] input, [data-option="' + kind + '"] select')]
     .map(field => [field.name, field.value]));
+  if (!get('background-control').hidden && fields.has('background')) options.background = true;
   busy = true;
   adjustComposer();
   status('compose-status', '正在生成 · ' + project.name);
@@ -164,7 +180,9 @@ compose.onsubmit = async event => {
       kind, model: fields.get('model'), prompt: fields.get('prompt'), providerId: fields.get('provider'), options,
     });
     await loadHistory(project);
-    status('compose-status', result.status === 'done' ? '已保存到 ' + project.name : result.error, result.status !== 'done');
+    const message = result.status === 'done' ? '已保存到 ' + project.name
+      : result.status === 'running' ? '已保存原任务，稍后可查询。' : result.error;
+    status('compose-status', message, ['failed','interrupted'].includes(result.status));
   } catch (error) { status('compose-status', error.message, true); }
   finally { busy = false; adjustComposer(); }
 };
@@ -259,3 +277,107 @@ providerForm.onsubmit = async event => {
 Promise.all([loadProjectList(), listProviders()])
   .then(() => loadHistory(activeProject))
   .catch(error => { get('gateway-status').textContent = error.message; });
+
+const harnessDialog = get('harness-dialog');
+function showHarness(state) {
+  const link = get('harness-link');
+  link.hidden = state.status !== 'ready';
+  if (state.url) link.href = state.url;
+  else link.removeAttribute('href');
+  get('harness-start').textContent = state.status === 'ready' ? '同步网关并重启' : '启动 DSH';
+  get('harness-start').dataset.restart = String(state.status === 'ready');
+  status('harness-status', ['DSH ' + state.version, state.model, state.issue].filter(Boolean).join(' · '), state.status === 'error');
+}
+get('harness').onclick = async () => {
+  harnessDialog.showModal();
+  try { showHarness(await api('/api/harness')); }
+  catch (error) { status('harness-status', error.message, true); }
+};
+get('harness-start').onclick = async () => {
+  const button = get('harness-start');
+  button.disabled = true;
+  status('harness-status', '正在启动官方工作台…');
+  try { showHarness(await api('/api/harness', 'POST', { restart:button.dataset.restart === 'true' })); }
+  catch (error) { status('harness-status', error.message, true); }
+  finally { button.disabled = false; }
+};
+
+const pluginsDialog = get('plugins-dialog');
+const pluginForm = get('plugin-form');
+const pluginList = get('plugin-list');
+const modes = {
+  native: '官方内置工作台', canvas: '独立安装画布，支持 OpenAI 兼容网关',
+  separate: '独立 AGPL 服务', restricted: '外部选装，按上游许可使用',
+  external: '从上游独立安装', skills: '通过 DSH 原生技能机制安装',
+};
+let editingPlugin;
+async function showPlugins() {
+  pluginForm.hidden = true;
+  pluginList.hidden = false;
+  status('plugin-status', '正在读取插件…');
+  try {
+    const rows = await api('/api/plugins');
+    pluginList.replaceChildren(...rows.map(row => {
+      const tile = el('article');
+      tile.className = 'plugin-tile';
+      const info = el('div');
+      const connected = row.mcpUrl ? ' · 已配置 MCP' : '';
+      info.append(el('strong', row.name), el('p', modes[row.mode] + ' · ' + row.license + connected));
+      const links = el('div');
+      const source = el('a', '上游');
+      source.href = row.upstream + '/tree/' + row.revision;
+      source.target = '_blank';
+      source.rel = 'noopener noreferrer';
+      links.append(source);
+      if (row.url) {
+        const open = el('a', '打开');
+        open.href = row.url;
+        open.target = '_blank';
+        open.rel = 'noopener noreferrer';
+        links.append(open);
+      }
+      const settings = el('button', '接入设置');
+      settings.type = 'button';
+      settings.onclick = () => showPluginSettings(row);
+      links.append(settings);
+      tile.append(info, links);
+      return tile;
+    }));
+    status('plugin-status', '');
+  } catch (error) { status('plugin-status', error.message, true); }
+}
+function showPluginSettings(row) {
+  editingPlugin = row;
+  pluginList.hidden = true;
+  pluginForm.hidden = false;
+  get('plugin-title').textContent = row.name;
+  get('plugin-mode').textContent = modes[row.mode];
+  get('plugin-address').hidden = row.mode === 'native';
+  get('plugin-mcp').hidden = row.mode === 'native';
+  pluginForm.elements.url.value = row.url ?? '';
+  pluginForm.elements.mcpUrl.value = row.mcpUrl ?? '';
+  for (const kind of ['text','image','audio']) {
+    const select = pluginForm.elements[kind];
+    select.replaceChildren(option('', '继承默认网关'),
+      ...providerRows.filter(item => item.scope.includes(kind)).map(item => option(item.id, item.name)));
+    select.value = row.bindings[kind] ?? '';
+  }
+  get('plugin-command').textContent = row.mode === 'native' ? '启动或同步 DSH 时读取当前绑定。'
+    : '支持 OpenAI 兼容网关的插件，可用 npm run plugin -- ' + row.id + ' 读取本机接入地址与插件凭据。';
+  status('plugin-save-status', '');
+}
+get('plugins').onclick = () => { pluginsDialog.showModal(); void showPlugins(); };
+get('plugin-back').onclick = () => void showPlugins();
+pluginForm.onsubmit = async event => {
+  event.preventDefault();
+  const fields = new FormData(pluginForm);
+  const button = pluginForm.querySelector('[type="submit"]');
+  button.disabled = true;
+  try {
+    const bindings = Object.fromEntries(['text','image','audio'].map(kind => [kind, fields.get(kind) || null]));
+    const saved = await api('/api/plugins/' + editingPlugin.id, 'PUT', { url:fields.get('url'), mcpUrl:fields.get('mcpUrl'), bindings });
+    showPluginSettings(saved);
+    status('plugin-save-status', '已保存');
+  } catch (error) { status('plugin-save-status', error.message, true); }
+  finally { button.disabled = false; }
+};

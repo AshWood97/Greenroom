@@ -83,3 +83,17 @@ input[type="checkbox"] { accent-color: var(--accent); }
   .workspace { width: calc(100% - 28px); margin: 25px auto; }
   .compose, .task { padding: 15px; }
 }
+
+.side-actions { margin-top: auto; display: grid; gap: 8px; }
+.side-actions button { text-align: left; }
+.background { margin-top: 15px; }
+.task button { margin-top: 12px; }
+#harness-link, .plugin-tile a { color: var(--accent); }
+#plugin-list { display: grid; gap: 8px; }
+.plugin-tile { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 11px; border: 1px solid var(--line); border-radius: 8px; }
+.plugin-tile p { color: var(--muted); font-size: 12px; margin-top: 3px; }
+.plugin-tile > :last-child { display: flex; align-items: center; gap: 12px; }
+.plugin-command { margin-top: 12px; }
+@media (max-width: 680px) {
+  .side-actions { display: flex; flex-wrap: wrap; }
+}
