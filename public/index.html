@@ -13,7 +13,11 @@
     <div class="brand"><span class="mark" aria-hidden="true"></span><span>Greenroom</span></div>
     <div class="side-heading"><h2>我的项目</h2><button id="new-project" type="button" class="add" aria-label="新建项目">+</button></div>
     <nav id="projects" aria-label="项目"></nav>
-    <button id="settings" type="button" class="settings-button">供应商与模型</button>
+    <div class="side-actions">
+      <button id="harness" type="button">DeepSeek Harness</button>
+      <button id="plugins" type="button">创作插件</button>
+      <button id="settings" type="button" class="settings-button">供应商与模型</button>
+    </div>
   </aside>
 
   <main>
@@ -43,6 +47,7 @@
             <label data-option="image" hidden>画质<select name="quality"><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="auto">自动</option></select></label>
             <label data-option="audio" hidden>音色<input name="voice" value="alloy" maxlength="80"></label>
           </div>
+          <label id="background-control" class="check background" hidden><input type="checkbox" name="background"> 后台生成并保存在服务商，以便稍后查询</label>
           <div class="form-action"><span id="compose-status" class="status" role="status"></span><button type="submit" class="primary" disabled>生成文字</button></div>
         </form>
         <section aria-labelledby="history-title" class="history">
@@ -78,6 +83,32 @@
       </form>
       <section class="catalog"><div class="dialog-heading"><h3>模型目录</h3><button id="refresh-models" type="button" disabled>刷新</button></div><div id="catalog" aria-live="polite"></div></section>
     </section>
+  </dialog>
+  <dialog id="harness-dialog">
+    <div class="dialog-heading"><h2>DeepSeek Harness</h2><button type="button" data-close aria-label="关闭">×</button></div>
+    <p id="harness-status" class="status" role="status"></p>
+    <div class="form-action">
+      <a id="harness-link" target="_blank" rel="noopener noreferrer" hidden>打开官方工作台 ↗</a>
+      <button id="harness-start" class="primary" type="button">启动 DSH</button>
+    </div>
+  </dialog>
+  <dialog id="plugins-dialog">
+    <div class="dialog-heading"><h2>创作插件</h2><button type="button" data-close aria-label="关闭">×</button></div>
+    <p id="plugin-status" class="status" role="status"></p>
+    <div id="plugin-list"></div>
+    <form id="plugin-form" hidden>
+      <div class="dialog-heading"><h3 id="plugin-title"></h3><button id="plugin-back" type="button">返回目录</button></div>
+      <p id="plugin-mode" class="status"></p>
+      <label id="plugin-address">本机插件地址<input name="url" type="url" placeholder="http://127.0.0.1:端口"></label>
+      <label id="plugin-mcp">Streamable HTTP MCP 地址（可选）<input name="mcpUrl" type="url" placeholder="http://127.0.0.1:端口/mcp"></label>
+      <div class="fields">
+        <label>文字<select name="text"></select></label>
+        <label>图片<select name="image"></select></label>
+        <label>音频<select name="audio"></select></label>
+      </div>
+      <p class="status plugin-command" id="plugin-command"></p>
+      <div class="form-action"><span id="plugin-save-status" class="status" role="status"></span><button class="primary" type="submit">保存接入</button></div>
+    </form>
   </dialog>
 </body>
 </html>
