@@ -1,0 +1,413 @@
+[
+  {
+    "name": "kineo_list_projects",
+    "description": "列出成员自己的原生 Kineo 项目。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "kineo_create_project",
+    "description": "创建原生 Kineo 工程，原 React 页面可直接打开。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "kineo_get_project",
+    "description": "读取工程、剧本和分镜。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "projectId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "kineo_update_project",
+    "description": "保存原生工程的创作字段。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "changes": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "projectId",
+        "changes"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "kineo_parse_script",
+    "description": "通过上游真实 Rust 拆分引擎解析小说或标准剧本并保存工程。此操作是规则拆分。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "novel",
+            "script"
+          ]
+        },
+        "stylePreset": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "projectId",
+        "text"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "kineo_generate_script",
+    "description": "使用管理员托管文本模型生成剧本并通过原引擎拆分保存。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "idea": {
+          "type": "string"
+        },
+        "episodes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "model": {
+          "type": "string"
+        },
+        "stylePreset": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "projectId",
+        "idea"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "kineo_generate_image",
+    "description": "生成成员私有图片，持久绑定原平台任务，按 frameId 回填原生分镜。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "frameId": {
+          "type": "string"
+        },
+        "prompt": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "size": {
+          "type": "string"
+        },
+        "aspect_ratio": {
+          "type": "string"
+        },
+        "images": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "projectId",
+        "prompt"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "kineo_generate_video",
+    "description": "生成视频，持久追踪原任务并回填工程分镜。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "frameId": {
+          "type": "string"
+        },
+        "prompt": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "duration": {
+          "type": "number"
+        },
+        "aspect_ratio": {
+          "type": "string"
+        },
+        "first_frame_url": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "projectId",
+        "prompt"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "kineo_synthesize_speech",
+    "description": "调用真实托管 TTS；未配置时报不可用，不使用原占位 Provider。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "frameId": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "voice": {
+          "type": "string"
+        },
+        "speed": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "projectId",
+        "text"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "kineo_render_video",
+    "description": "后台执行上游真实 FFmpeg 漫剧渲染，保留运镜、字幕、配音、BGM参数并归档成片。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "params": {
+          "type": "object",
+          "description": "原生 RenderFullVideoParams：scenes、resolution、aspect_ratio、subtitle_style 等，素材须来自成员私有素材或本插件文件。"
+        }
+      },
+      "required": [
+        "projectId",
+        "params"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "kineo_list_tasks",
+    "description": "查看任务与逐项真实失败原因。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "kineo_get_task",
+    "description": "查询原任务与归档结果，不重新提交。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "taskId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "taskId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "kineo_resume_tasks",
+    "description": "恢复成员工程中未完成的原平台任务和本地渲染。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "kineo_compose_video",
+    "description": "后台合成原 Kineo 时间轴图片或视频场景并归档；保留上游实际淡入淡出效果。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "scenes": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "options": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "scenes"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "kineo_add_subtitles",
+    "description": "为成员视频烧录原字幕轨，保留字号、字体、颜色、位置和边距设置。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "inputPath": {
+          "type": "string"
+        },
+        "subtitles": {
+          "type": "object"
+        },
+        "style": {
+          "type": "object"
+        },
+        "outputFormat": {
+          "type": "string",
+          "enum": [
+            "mp4",
+            "webm",
+            "mov",
+            "avi"
+          ]
+        }
+      },
+      "required": [
+        "inputPath",
+        "subtitles"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "kineo_mix_audio",
+    "description": "混入成员背景音频，保留原视频音轨、音量、淡入淡出和循环设置。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "inputPath": {
+          "type": "string"
+        },
+        "music": {
+          "type": "object"
+        },
+        "outputFormat": {
+          "type": "string",
+          "enum": [
+            "mp4",
+            "webm",
+            "mov",
+            "avi"
+          ]
+        }
+      },
+      "required": [
+        "inputPath",
+        "music"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "kineo_export_video",
+    "description": "后台转码或调整成员成片分辨率、帧率、码率，并归档输出。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "inputPath": {
+          "type": "string"
+        },
+        "outputFormat": {
+          "type": "string",
+          "enum": [
+            "mp4",
+            "webm",
+            "mov",
+            "avi"
+          ]
+        },
+        "options": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "inputPath"
+      ],
+      "additionalProperties": false
+    }
+  }
+]

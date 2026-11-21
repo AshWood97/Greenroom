@@ -1,0 +1,12 @@
+{
+  "id": "manjuforge",
+  "title": "ManjuForge",
+  "group": "ai-drama-skills",
+  "kind": "skills",
+  "upstream": "https://github.com/mengxiujie/ManjuForge",
+  "revision": "e6a42b29dbc19cdd315fa54ebed38c43247d74eb",
+  "license": "MIT-0",
+  "runtime": null,
+  "ui": null,
+  "skillRoots": ["."]
+}

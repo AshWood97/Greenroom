@@ -1,0 +1,18 @@
+{
+  "id": "aid-studio",
+  "title": "AID Studio",
+  "group": "ai-drama-tools",
+  "kind": "app",
+  "upstream": "https://github.com/shijue-aid/aid-studio",
+  "revision": "804a775dd03cfb144a8218b3a6fdea876c7e8066",
+  "license": "MIT",
+  "deployment": { "shared": true },
+  "runtime": {
+    "command": "node",
+    "args": ["/opt/aid/greenroom/host.mjs"],
+    "cwd": "/opt/aid",
+    "port": 18807,
+    "env": { "GREENROOM_MANAGED": "true", "GREENROOM_PLUGIN_ROOT": "${ROOT}", "GREENROOM_BASE_PATH": "${BASE_PATH}" }
+  },
+  "ui": { "basePath": "/plugins/aid-studio/", "upstreamPath": "/plugins/aid-studio/" }
+}

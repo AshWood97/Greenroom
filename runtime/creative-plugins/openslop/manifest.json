@@ -1,0 +1,27 @@
+{
+  "id": "openslop",
+  "title": "OpenSlop",
+  "group": "ai-drama-tools",
+  "kind": "app",
+  "upstream": "https://github.com/openslop/openslop",
+  "revision": "8848790b15730b63f601e8795790880379660c5f",
+  "license": "Apache-2.0",
+  "runtime": { "lifecycle": {"launcher":"node","readyPath":"/api/greenroom/lifecycle"},
+    "command": "node",
+    "args": ["--import", "tsx", "greenroom/start.ts"],
+    "cwd": "/opt/openslop",
+    "port": 18809,
+    "env": {
+      "XDG_CONFIG_HOME": "/tmp/chromium-config",
+      "XDG_CACHE_HOME": "/tmp/chromium-cache",
+      "PORT": "18809",
+      "DISABLE_TELEMETRY": "true",
+      "NEXT_TELEMETRY_DISABLED": "1",
+      "GREENROOM_PLUGIN_ROOT": "${ROOT}",
+      "GREENROOM_MANAGED_URL": "${BRIDGE_URL}",
+      "GREENROOM_BROKER_URL": "${BROKER_URL}",
+      "GREENROOM_BASE_PATH": "${BASE_PATH}"
+    }
+  },
+  "ui": { "basePath": "/plugins/openslop/", "upstreamPath": "/" }
+}

@@ -1,0 +1,32 @@
+{
+  "id": "open-ai-canvas",
+  "title": "影策 Open AI Canvas",
+  "group": "ai-drama-tools",
+  "kind": "app",
+  "upstream": "https://github.com/ddcat-ai/open-ai-canvas",
+  "revision": "3ce013ec15a1a6065654986fd7f9433bf8d10b8c",
+  "license": "MIT",
+  "runtime": {
+    "lifecycle": {
+      "launcher": "node",
+      "readyPath": "/api/health/ready"
+    },
+    "command": "node",
+    "args": [
+      "/opt/canvas/greenroom/host.mjs"
+    ],
+    "cwd": "/opt/canvas",
+    "port": 18806,
+    "env": {
+      "GREENROOM_PLUGIN_ROOT": "${ROOT}",
+      "GREENROOM_BROKER_URL": "${BROKER_URL}",
+      "GREENROOM_MANAGED_URL": "${BRIDGE_URL}",
+      "GREENROOM_BASE_PATH": "${BASE_PATH}",
+      "GREENROOM_PLUGIN_STARTUP_MS": "120000"
+    }
+  },
+  "ui": {
+    "basePath": "/plugins/open-ai-canvas/",
+    "upstreamPath": "/plugins/open-ai-canvas/"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "id": "awesome-short-drama-skills",
+  "title": "短剧Skill发现",
+  "group": "ai-drama-skills",
+  "kind": "skills",
+  "releaseBatch": "aigc-skills",
+  "upstream": "https://github.com/UnderleveledBuilder/awesome-short-drama-skills",
+  "revision": "9a1f686460c0a03cb0df40c3d2e55739568911dc",
+  "license": "CC0-1.0",
+  "runtime": null,
+  "ui": null,
+  "skillRoots": [
+    "skills/short-drama-skill-finder"
+  ]
+}

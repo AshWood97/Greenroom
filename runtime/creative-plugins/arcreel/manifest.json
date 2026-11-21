@@ -1,0 +1,7 @@
+{
+  "id": "arcreel", "title": "ArcReel", "group": "ai-drama-tools", "kind": "app",
+  "upstream": "https://github.com/ArcReel/ArcReel", "revision": "afdb2091af79c154f87c3a1683bfb5d2ddd75493", "license": "AGPL-3.0-only WITH upstream-NOTICE",
+  "runtime": { "lifecycle": {"launcher":"python","readyPath":"/api/greenroom/lifecycle"}, "command": "python", "args": ["greenroom_start.py"], "cwd": "/opt/arcreel", "port": 18804,
+    "env": { "GREENROOM_PLUGIN_ROOT": "${ROOT}", "ARCREEL_DATA_DIR": "${ROOT}", "GREENROOM_MANAGED_URL": "${BRIDGE_URL}", "GREENROOM_BROKER_URL": "${BROKER_URL}", "GREENROOM_BASE_PATH": "${BASE_PATH}", "AUTH_ENABLED": "false" } },
+  "ui": { "basePath": "/plugins/arcreel/", "upstreamPath": "/" }
+}

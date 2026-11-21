@@ -1,0 +1,11 @@
+{
+  "name": "greenroom-managed-profile",
+  "private": true,
+  "type": "module",
+  "dependencies": {},
+  "dsh": {
+    "profile": {
+      "bundles": ["@deepseek-ai/dsh-base", "@deepseek-ai/dsh-web-app"]
+    }
+  }
+}

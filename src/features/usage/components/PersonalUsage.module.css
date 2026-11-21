@@ -1,0 +1,62 @@
+.trigger, .iconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  background: #152128;
+  color: #d5e7e0;
+  padding: 7px 10px;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.trigger:hover, .iconButton:hover { border-color: #10b981; }
+.iconButton:disabled { opacity: 0.5; cursor: wait; }
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.65);
+  color: #dce5e2;
+}
+.panel {
+  width: min(900px, 100%);
+  max-height: 88vh;
+  overflow: auto;
+  padding: 22px;
+  border: 1px solid #2b4540;
+  border-radius: 14px;
+  background: #0e181c;
+  box-shadow: 0 20px 70px #0009;
+  text-align: left;
+}
+.header, .toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.header { justify-content: space-between; }
+.header h2 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 18px; }
+.header h2 span { color: #93a6a1; font-size: 12px; font-weight: 400; }
+.toolbar { margin: 20px 0; font-size: 12px; }
+.toolbar p { flex: 1; color: #a3b5af; margin: 0; }
+.toolbar select { color: #dce5e2; background: #17242a; border: 1px solid #334155; padding: 6px; border-radius: 6px; }
+.metrics { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; }
+.metrics > div { display: flex; flex-direction: column; gap: 8px; padding: 16px; border-radius: 9px; background: #152329; }
+.metrics span, .metrics small { color: #9db1aa; font-size: 12px; }
+.metrics strong { color: #34d399; font-size: 25px; overflow-wrap: anywhere; }
+.explanation, .notice { color: #a3b5af; font-size: 12px; line-height: 1.6; }
+.panel h3 { font-size: 14px; margin: 24px 0 10px; }
+.tableWrapper { overflow-x: auto; }
+.panel table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.panel th { text-align: left; color: #9fb3ab; font-weight: 500; }
+.panel th, .panel td { padding: 10px 8px; border-bottom: 1px solid #23333a; }
+.panel td { overflow-wrap: anywhere; }
+.empty { text-align: center; color: #82938d; }
+@media (max-width: 600px) {
+  .backdrop { padding: 8px; }
+  .panel { padding: 16px; }
+  .metrics { grid-template-columns: 1fr; }
+  .metrics strong { font-size: 23px; }
+}

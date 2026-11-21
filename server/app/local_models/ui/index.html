@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>本机模型 API 配置 · Greenroom</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main>
+    <header>
+      <p class="eyebrow">GREENROOM · 本机单用户</p>
+      <h1>自定义模型 API</h1>
+      <p>配置保存到本机服务。Key 不回显、不存入浏览器。保存配置不会发起模型请求。</p>
+    </header>
+    <div class="notice">仅支持明确配置的 HTTP / HTTPS JSON 或文件请求。不支持任意特殊签名、WebSocket 或未配置的能力。任务受理未知时保留原编号，不自动重投。</div>
+    <p id="notice" role="status" aria-live="polite"></p>
+    <div class="layout">
+      <aside>
+        <h2>模型配置</h2>
+        <button type="button" id="reload">重新读取配置</button>
+        <ul id="profiles" aria-label="已保存模型配置"></ul>
+        <button type="button" id="new-profile">新建配置</button>
+        <p class="muted">配置仅在此本机服务使用。旧公司网关、成员名单和计费服务不属于此页面。</p>
+      </aside>
+      <section aria-labelledby="editor-title">
+        <h2 id="editor-title">连接与协议</h2>
+        <form id="profile-form" autocomplete="off">
+          <fieldset id="profile-fields">
+            <div class="grid">
+              <label>配置 ID<input id="profile-id" required pattern="[A-Za-z0-9_-]+" maxlength="128" placeholder="my-image-api"></label>
+              <label>显示名称<input id="profile-name" required maxlength="100" placeholder="我的图片模型"></label>
+              <label>输出能力<select id="kind"><option value="image">图片</option><option value="video">视频</option><option value="text">文本</option><option value="audio">音频</option></select></label>
+              <label>请求方法<select id="method"><option>POST</option><option>PUT</option><option>GET</option><option>PATCH</option></select></label>
+            </div>
+            <label>提交地址<input id="endpoint" type="url" required placeholder="https://api.example.com/generate" spellcheck="false"></label>
+            <p class="muted">填写完整地址，不在 URL 中放 Key。服务端不会跟随重定向；协议或目的地址变化需重新配置。</p>
+            <label class="check"><input type="checkbox" id="allow-http">我确认使用 HTTP 明文连接，知道请求内容和 Key 可能被网络读取</label>
+            <label class="check"><input type="checkbox" id="allow-private">允许此配置访问本机 / 私网模型服务（仅对我明确填写的目的地址）</label>
+            <h3>认证</h3>
+            <div class="grid">
+              <label>认证方式<select id="auth"><option value="none">无认证</option><option value="bearer">Bearer Key</option><option value="header">自定义 Key 请求头</option></select></label>
+              <label>Key 请求头名称<input id="auth-header" placeholder="X-API-Key" spellcheck="false" disabled></label>
+            </div>
+            <label>新的 Key<input id="key" type="password" autocomplete="new-password" spellcheck="false" placeholder="留空保留已有 Key" disabled></label>
+            <p id="key-status" class="muted">未配置 Key。没有读取或导出已存 Key 的入口。</p>
+            <p class="muted">改变提交主机、HTTP/HTTPS 协议或认证方式时，必须重新填写 Key 或明确清除；不会把旧 Key 自动转交新主机。查询地址必须与提交地址同源。清除后新任务在补 Key 前不可执行，原任务仍保留冻结 Key 以查询原编号。</p>
+            <label class="check"><input type="checkbox" id="clear-key">明确清除此配置的 Key（不删除原任务冻结的 Key）</label>
+            <h3>输入字段</h3>
+            <label>请求格式<select id="body-mode"><option value="json">JSON</option><option value="multipart">multipart/form-data（文件字段）</option></select></label>
+            <label>固定 JSON 参数<textarea id="fixed-json" rows="4" spellcheck="false">{}</textarea></label>
+            <p class="muted">固定参数只放模型名、尺寸等非秘密参数，不放 Key。下方映射将运行输入写到指定字段。</p>
+            <div id="input-mappings"></div>
+            <button type="button" id="add-input">添加输入映射</button>
+            <h3>结果与任务状态映射</h3>
+            <p class="muted">读取路径使用 JSON Pointer，例如 /data/id、/data/images/0/url。仅结果映射支持 * 展开数组；不执行脚本或 JSONPath 表达式。</p>
+            <div class="grid">
+              <label>任务编号路径<input id="task-id-path" placeholder="/data/task_id" spellcheck="false"></label>
+              <label>状态路径<input id="status-path" placeholder="/data/status" spellcheck="false"></label>
+              <label>失败原因路径<input id="error-path" placeholder="/error/message" spellcheck="false"></label>
+              <label>明确未受理状态（JSON 数组）<input id="not-accepted-values" placeholder='["rejected"]'></label>
+              <label>成功状态（JSON 数组）<input id="success-values" placeholder='["succeeded",200,true]'></label>
+              <label>失败状态（JSON 数组）<input id="failed-values" placeholder='["failed","error"]'></label>
+            </div>
+            <p class="muted">本候选每个配置只映射一种输出能力，可映射多个同类型结果；混合类型响应需要专用适配，不要为领取原结果重复生成。状态值使用 JSON 数组保留类型，例如 [200,true,"done"]，不同于 ["200","true","done"]。可选任务/状态/错误路径留空表示未配置；结果路径必须为非空 JSON Pointer，本候选不支持根标量响应。</p>
+            <div id="output-mappings"></div>
+            <button type="button" id="add-output">添加结果映射</button>
+            <label>原任务查询地址<input id="poll-url" placeholder="https://api.example.com/tasks/{task_id}" spellcheck="false"></label>
+            <div class="grid">
+              <label>查询方法<select id="poll-method"><option>GET</option><option>POST</option></select></label>
+              <label>查询参数 / JSON 编号字段（可选）<input id="poll-id-field" placeholder="task_id" spellcheck="false"></label>
+            </div>
+            <label>查询固定 JSON 参数<textarea id="poll-constants" rows="2" spellcheck="false">{}</textarea></label>
+            <p class="muted">原任务编号可填入地址的 {task_id} 或编号字段（GET 查询参数 / POST JSON）；地址必须同源，查询不会重新提交任务。未配置查询协议时，未知结果无法自动恢复。</p>
+            <button type="submit" class="primary">保存配置（不调用模型）</button>
+          </fieldset>
+        </form>
+      </section>
+    </div>
+    <section class="run-panel" aria-labelledby="run-title">
+      <h2 id="run-title">明确新任务与原编号查询</h2>
+      <p>这里的提交可能产生服务商费用，只有你点击并确认后才发送。读本机记录与查询原任务分开；不会因刷新、错误或未知状态自动提交。</p>
+      <form id="run-form">
+        <fieldset id="run-fields">
+          <div class="grid">
+            <label>已保存配置<select id="run-profile" required></select></label>
+            <label>本机请求编号<input id="request-id" readonly></label>
+          </div>
+          <label>运行输入 JSON<textarea id="run-input" rows="4" spellcheck="false">{"prompt":""}</textarea></label>
+          <div id="run-files"></div>
+          <label class="check"><input type="checkbox" id="confirm-submit">我明确新建此任务，知道它可能产生费用；不是查询或重投未知任务</label>
+          <button type="submit" class="primary" id="submit-run">明确提交一次</button>
+          <button type="button" id="new-run">准备另一个新任务</button>
+        </fieldset>
+      </form>
+      <div class="query-row">
+        <label>最近本机任务（最多 100 条，不请求服务商）<select id="recent-runs"><option value="">请选择原编号</option></select></label>
+        <button type="button" id="reload-runs">刷新本机任务列表</button>
+      </div>
+      <div class="query-row">
+        <label>原本机请求编号<input id="lookup-id" spellcheck="false"></label>
+        <button type="button" id="read-run">读取本机记录</button>
+        <button type="button" id="poll-run">仅查询原服务商任务</button>
+      </div>
+      <div id="run-result" role="status" aria-live="polite"></div>
+    </section>
+    <footer>本候选不代表现有全部 AIGC 插件已经切换到自定义 API。原插件接线、素材持久化及真实服务商行为需按各自接口验证。</footer>
+  </main>
+  <script type="module" src="./app.mjs"></script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "id": "manju-laoli-skill",
+  "title": "漫剧老李",
+  "group": "ai-drama-skills",
+  "kind": "skills",
+  "releaseBatch": "aigc-skills",
+  "upstream": "https://github.com/lixiaoxiao9888-create/manju-laoli-skill",
+  "revision": "ffa717b83f21fecb968d7697690196486a65332c",
+  "license": "MIT",
+  "runtime": null,
+  "ui": null,
+  "skillRoots": [
+    "."
+  ]
+}

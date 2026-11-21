@@ -1,0 +1,8 @@
+{
+  "id": "moneyprinter", "title": "MoneyPrinterTurbo", "group": "ai-drama-tools", "kind": "app",
+  "upstream": "https://github.com/harry0703/MoneyPrinterTurbo",
+  "revision": "c235354804104665b58679223847f78c2b5e27d4", "license": "MIT",
+  "runtime": { "lifecycle": {"launcher":"python","readyPath":"/api/greenroom/lifecycle"}, "command": "python", "args": ["greenroom.py"], "cwd": "/opt/moneyprinter", "port": 18801,
+    "env": { "GREENROOM_PLUGIN_ROOT": "${ROOT}", "MPT_HOME": "${ROOT}", "GREENROOM_MANAGED_URL": "${BRIDGE_URL}", "GREENROOM_BASE_PATH": "${BASE_PATH}" } },
+  "ui": { "basePath": "/plugins/moneyprinter/", "upstreamPath": "/" }
+}

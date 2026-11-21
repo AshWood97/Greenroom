@@ -1,0 +1,161 @@
+{
+  "releaseReady": true,
+  "aigcSkillsReady": true,
+  "groups": [
+    {
+      "id": "ai-drama-tools",
+      "title": "AI剧综合工具"
+    },
+    {
+      "id": "ai-drama-skills",
+      "title": "AIGC Skills"
+    }
+  ],
+  "plugins": [
+    {
+      "id": "t8",
+      "title": "T8 画布",
+      "group": "ai-drama-tools",
+      "icon": "▦",
+      "tabId": "greenroom-t8-canvas",
+      "tabKind": "greenroom-canvas",
+      "basePath": "/canvas/",
+      "builtin": true
+    },
+    {
+      "id": "moneyprinter",
+      "title": "MoneyPrinterTurbo",
+      "group": "ai-drama-tools",
+      "icon": "🎞"
+    },
+    {
+      "id": "toonflow",
+      "title": "Toonflow",
+      "group": "ai-drama-tools",
+      "icon": "🎨"
+    },
+    {
+      "id": "open-ai-canvas",
+      "title": "影策",
+      "group": "ai-drama-tools",
+      "icon": "▦"
+    },
+    {
+      "id": "moyin",
+      "title": "魔因漫创",
+      "group": "ai-drama-tools",
+      "icon": "🎬"
+    },
+    {
+      "id": "arcreel",
+      "title": "ArcReel",
+      "group": "ai-drama-tools",
+      "icon": "🎞"
+    },
+    {
+      "id": "localminidrama",
+      "title": "LocalMiniDrama",
+      "group": "ai-drama-tools",
+      "icon": "🎬"
+    },
+    {
+      "id": "aid-studio",
+      "title": "AID Studio",
+      "group": "ai-drama-tools",
+      "icon": "🎬"
+    },
+    {
+      "id": "kineo",
+      "title": "Kineo",
+      "group": "ai-drama-tools",
+      "icon": "🎞"
+    },
+    {
+      "id": "openslop",
+      "title": "OpenSlop",
+      "group": "ai-drama-tools",
+      "icon": "🎞"
+    },
+    {
+      "id": "vimax",
+      "title": "ViMax",
+      "group": "ai-drama-tools",
+      "icon": "🎥"
+    },
+    {
+      "id": "openmontage",
+      "title": "OpenMontage",
+      "group": "ai-drama-skills",
+      "icon": "✦"
+    },
+    {
+      "id": "drama-skills",
+      "title": "Drama Skills",
+      "group": "ai-drama-skills",
+      "icon": "✦"
+    },
+    {
+      "id": "shuohao-skills",
+      "title": "Shuohao Skills",
+      "group": "ai-drama-skills",
+      "icon": "✦",
+      "kind": "skills",
+      "releaseBatch": "aigc-skills",
+      "ui": null
+    },
+    {
+      "id": "lemo-opuscar",
+      "title": "Lemo Opuscar",
+      "group": "ai-drama-skills",
+      "icon": "✦",
+      "kind": "skills",
+      "releaseBatch": "aigc-skills",
+      "ui": null
+    },
+    {
+      "id": "manju-laoli-skill",
+      "title": "漫剧老李",
+      "group": "ai-drama-skills",
+      "icon": "✦",
+      "kind": "skills",
+      "releaseBatch": "aigc-skills",
+      "ui": null
+    },
+    {
+      "id": "awesome-short-drama-skills",
+      "title": "短剧 Skill 查找",
+      "group": "ai-drama-skills",
+      "icon": "⌕",
+      "kind": "skills",
+      "releaseBatch": "aigc-skills",
+      "ui": null
+    },
+    {
+      "id": "director-skills",
+      "title": "导演 Skills",
+      "group": "ai-drama-skills",
+      "icon": "✦",
+      "kind": "skills",
+      "releaseBatch": "aigc-skills",
+      "ui": null
+    },
+    {
+      "id": "take-one",
+      "title": "首映创作室",
+      "group": "ai-drama-skills",
+      "icon": "🎞",
+      "kind": "skills",
+      "releaseBatch": "aigc-skills",
+      "attribution": "来源：take-one"
+    },
+    {
+      "id": "manjuforge",
+      "title": "ManjuForge",
+      "group": "ai-drama-skills",
+      "icon": "✦",
+      "kind": "skills",
+      "releaseBatch": "aigc-skills",
+      "ui": null
+    }
+  ]
+}

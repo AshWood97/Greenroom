@@ -1,0 +1,633 @@
+[
+  {
+    "name": "openmontage_list_pipelines",
+    "description": "列出固定上游的12条真实生产流水线、阶段、产物名与审批要求。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "openmontage_list_projects",
+    "description": "列出当前成员 OpenMontage 工程。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "openmontage_create_project",
+    "description": "按原 pipeline_defs 创建私有工程；Backlot 将实时显示同一工程。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "pipeline": {
+          "type": "string",
+          "enum": [
+            "animated-explainer",
+            "animation",
+            "avatar-spokesperson",
+            "character-animation",
+            "cinematic",
+            "clip-factory",
+            "documentary-montage",
+            "hybrid",
+            "localization-dub",
+            "podcast-repurpose",
+            "screen-demo",
+            "talking-head"
+          ]
+        },
+        "stylePlaybook": {
+          "type": "string"
+        },
+        "series": {
+          "type": "string",
+          "description": "可选系列名称；相同名称的工程在原生 Backlot 中分组。"
+        }
+      },
+      "required": [
+        "title",
+        "pipeline"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "openmontage_set_series",
+    "description": "设置或清除当前成员现有工程的系列分组；空字符串清除分组。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "series": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "projectId",
+        "series"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "openmontage_get_project",
+    "description": "读取原 Backlot 工程状态、检查点、素材和当前任务；查询不会重新生成。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "projectId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "openmontage_write_artifact",
+    "description": "保存当前流水线真实阶段声明的JSON业务产物及原检查点。要求人工审批的阶段保留 awaiting_human。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "stage": {
+          "type": "string"
+        },
+        "artifact": {
+          "type": "string"
+        },
+        "content": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "projectId",
+        "stage",
+        "artifact",
+        "content"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "openmontage_run_text_stage",
+    "description": "使用托管文本模型、原阶段 Skill 和已有产物完成该阶段JSON产物。只做文本，不生成媒体。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "stage": {
+          "type": "string"
+        },
+        "instruction": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "temperature": {
+          "type": "number"
+        },
+        "max_tokens": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "top_p": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "projectId",
+        "stage",
+        "instruction"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "openmontage_approve_stage",
+    "description": "在用户明确认可已展示的阶段产物后记录人工批准；不运行上游验证或摘要流程。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "stage": {
+          "type": "string"
+        },
+        "approved": {
+          "type": "boolean",
+          "const": true
+        }
+      },
+      "required": [
+        "projectId",
+        "stage",
+        "approved"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "openmontage_read_knowledge",
+    "description": "按需读取原 Skill、pipeline_defs、风格、Schema和渲染参考。省略 resource 列出批准知识资源；只允许该列表，不读取任意文件。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "resource": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "openmontage_import_asset",
+    "description": "将当前成员已有平台资产放入此工程素材目录，用于原Backlot、分镜和本地渲染。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "assetId": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "mimeType": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "projectId",
+        "assetId",
+        "label",
+        "mimeType"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "openmontage_audio_probe",
+    "description": "用固定上游 AudioProbe/ffprobe 读取本工程已导入音视频的真实时长、格式及音轨参数；仅本地单文件媒体，不识别语音、不提供字级时码、不生成或渲染。原生 Backlot 记录探测事件。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "assetId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "projectId",
+        "assetId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "openmontage_audio_energy",
+    "description": "用固定原生 AudioEnergy/FFmpeg EBU R128 分析本工程已导入 WAV（不超过120 MiB/600秒），返回 momentary 响度的逐秒算术平均、选窗及循环建议，不是 integrated LUFS 或听感判断。不识别语音、不自动裁剪/循环/混音或修改制作方案，保留 Backlot 事件。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "assetId": {
+          "type": "string"
+        },
+        "videoDurationSeconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 600,
+          "description": "可选目标视频时长，整数秒；仅影响原生选窗/循环建议。"
+        },
+        "energyThresholdLufs": {
+          "type": "number",
+          "minimum": -120,
+          "maximum": 0,
+          "default": -40,
+          "description": "可选活跃响度阈值，有限 LUFS 数值。"
+        }
+      },
+      "required": [
+        "projectId",
+        "assetId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "openmontage_search_nasa",
+    "description": "按明确的公开检索词调用固定 NASA provider，只检索图片/视频候选及完整原始来源元数据，保存本工程来源记录。不下载媒体、不生成、不判断已获许可；NASA 托管和候选命中不等于可商用或已通过内容审查。查询会发给 NASA，不发送私密剧本或个人资料。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "query": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "image",
+            "video"
+          ],
+          "default": "image"
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3,
+          "default": 1
+        }
+      },
+      "required": [
+        "projectId",
+        "query"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "openmontage_search_archive_org",
+    "description": "按明确的公开关键词检索 Archive.org 元数据并保存当前成员工程来源记录。保留完整原始记录和来源许可标签，授权状态始终待核验；不下载媒体、不生成、不将命中或源站托管当作使用许可。查询会发送给该来源，不发送私密剧本或个人资料。网络或解析失败立即返回错误，不自动重试或换来源；原生查询只在有效空结果时最多采用三种策略。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "query": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "video"
+          ],
+          "default": "video"
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3,
+          "default": 1
+        }
+      },
+      "required": [
+        "projectId",
+        "query"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "openmontage_search_wikimedia",
+    "description": "按明确的公开关键词检索 Wikimedia Commons 元数据并保存当前成员工程来源记录。保留完整原始记录和来源许可标签，授权状态始终待核验；不下载媒体、不生成、不将命中或源站托管当作使用许可。查询会发送给该来源，不发送私密剧本或个人资料。网络或解析失败立即返回错误，不自动重试或换来源；原生查询只在有效空结果时最多采用三种策略。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "query": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "image",
+            "video"
+          ],
+          "default": "video"
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3,
+          "default": 1
+        }
+      },
+      "required": [
+        "projectId",
+        "query"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "openmontage_generate_assets",
+    "description": "按已批准制作方案提交图片、视频、TTS或音乐。逐项返回真实提交失败，不自动重提；项目保存原任务与产物。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "jobs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "properties": {
+              "assetId": {
+                "type": "string"
+              },
+              "sceneId": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "image",
+                  "video",
+                  "tts",
+                  "music"
+                ]
+              },
+              "model": {
+                "type": "string"
+              },
+              "prompt": {
+                "type": "string"
+              },
+              "referenceAssetIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "duration": {
+                "type": "number",
+                "minimum": 0.1
+              },
+              "aspectRatio": {
+                "type": "string",
+                "enum": [
+                  "auto",
+                  "21:9",
+                  "16:9",
+                  "3:2",
+                  "4:3",
+                  "5:4",
+                  "1:1",
+                  "4:5",
+                  "3:4",
+                  "2:3",
+                  "9:16",
+                  "9:21"
+                ]
+              },
+              "resolution": {
+                "type": "string"
+              },
+              "voice": {
+                "type": "string"
+              },
+              "speed": {
+                "type": "number",
+                "minimum": 0.25,
+                "maximum": 4
+              },
+              "instrumental": {
+                "type": "boolean"
+              },
+              "size": {
+                "type": "string"
+              },
+              "aspect_ratio": {
+                "type": "string"
+              },
+              "n": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "seed": {
+                "type": "integer"
+              },
+              "quality": {
+                "type": "string"
+              },
+              "generate_audio": {
+                "type": "boolean"
+              },
+              "response_format": {
+                "type": "string",
+                "enum": [
+                  "mp3",
+                  "wav",
+                  "flac",
+                  "opus"
+                ]
+              },
+              "firstFrameAssetId": {
+                "type": "string",
+                "description": "首帧图片的当前成员资产编号（仅视频）。"
+              },
+              "lastFrameAssetId": {
+                "type": "string",
+                "description": "尾帧图片的当前成员资产编号（仅视频）。"
+              },
+              "referenceVideoAssetIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "参考视频的当前成员资产编号（仅视频）。"
+              },
+              "referenceAudioAssetIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "参考音频的当前成员资产编号（仅视频）。"
+              }
+            },
+            "required": [
+              "assetId",
+              "kind",
+              "prompt"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "projectId",
+        "jobs"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "openmontage_get_tasks",
+    "description": "查询/恢复工程原任务及私有产物，保留单项失败、最后查询原因、原任务编号。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "projectId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "openmontage_render",
+    "description": "使用固定 Revideo 场景和 FFmpeg 混音渲染；proposal/edit 的 render_runtime 必须同为 revideo，其它引擎不替代。分段旁白用真实 asset_id；启用字幕必须有真实时码 source；音乐 ducking 需要真实旁白侧链，支持显式阈值/降幅/起落时间。立即返回持久任务编号，失败保留原任务。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 64,
+          "maximum": 3840
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 64,
+          "maximum": 3840
+        },
+        "fps": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 60
+        }
+      },
+      "required": [
+        "projectId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "openmontage_archive_project",
+    "description": "将原创作产物、流水线检查点和已制作媒体打包归档到成员资产；不产生摘要/额外校验文件。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "projectId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "openmontage_mark_silence",
+    "description": "仅标记同工程已导入 WAV 的静音与非静音区间，保存原生研究 JSON；不识别语音、不自动剪辑。最多120 MiB、600秒。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "assetId": {
+          "type": "string"
+        },
+        "silenceThresholdDb": {
+          "type": "number",
+          "minimum": -120,
+          "maximum": 0,
+          "default": -35
+        },
+        "minSilenceDuration": {
+          "type": "number",
+          "minimum": 0.1,
+          "maximum": 600,
+          "default": 0.5
+        },
+        "paddingSeconds": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 0.08
+        }
+      },
+      "required": [
+        "projectId",
+        "assetId"
+      ],
+      "additionalProperties": false
+    }
+  }
+]

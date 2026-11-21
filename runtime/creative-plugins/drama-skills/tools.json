@@ -1,0 +1,903 @@
+[
+  {
+    "name": "drama_skills_list_projects",
+    "description": "列出当前成员的短剧工程。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "drama_skills_create_project",
+    "description": "创建使用原套件目录格式的短剧工程。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "aspectRatio": {
+          "type": "string",
+          "enum": [
+            "9:16",
+            "16:9",
+            "1:1"
+          ]
+        },
+        "episodeCount": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "promptLanguage": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "title"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "drama_skills_get_project",
+    "description": "读取项目、分集文档目录、当前生产任务及私有产物。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "projectId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "drama_skills_read_document",
+    "description": "读取指定创作文档，不运行脚本。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "episode": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "document": {
+          "type": "string",
+          "enum": [
+            "source",
+            "creative-brief",
+            "story-engine",
+            "episode-map",
+            "script",
+            "visual-setting",
+            "storyboard",
+            "image-prompts",
+            "video-prompts",
+            "cut-list",
+            "review",
+            "adaptation-map",
+            "breakdown-report"
+          ]
+        }
+      },
+      "required": [
+        "projectId",
+        "document"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "drama_skills_write_document",
+    "description": "保存原套件 Markdown/JSONL 创作文档；修改已预览输入会撤销对应生产确认。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "episode": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "document": {
+          "type": "string",
+          "enum": [
+            "source",
+            "creative-brief",
+            "story-engine",
+            "episode-map",
+            "script",
+            "visual-setting",
+            "storyboard",
+            "image-prompts",
+            "video-prompts",
+            "cut-list",
+            "review",
+            "adaptation-map",
+            "breakdown-report"
+          ]
+        },
+        "content": {
+          "type": "string"
+        },
+        "accepted": {
+          "type": "boolean"
+        },
+        "expectedRevision": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "projectId",
+        "document",
+        "content"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "drama_skills_generate_document",
+    "description": "使用管理员托管文本模型和对应原 Skill 创作一份文档，保存为待接受草稿。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "episode": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "document": {
+          "type": "string",
+          "enum": [
+            "creative-brief",
+            "story-engine",
+            "episode-map",
+            "script",
+            "visual-setting",
+            "storyboard",
+            "image-prompts",
+            "video-prompts",
+            "cut-list",
+            "review",
+            "adaptation-map",
+            "breakdown-report"
+          ]
+        },
+        "instruction": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "temperature": {
+          "type": "number"
+        },
+        "max_tokens": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "top_p": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "projectId",
+        "document",
+        "instruction"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "drama_skills_read_knowledge",
+    "description": "按需读取12个已安装 Skill 的正文、引用或模板。resource 是列出的只读资源名，不能读取项目外文件。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "skill": {
+          "type": "string",
+          "enum": [
+            "short-drama",
+            "short-drama-novel-analyze",
+            "short-drama-develop",
+            "short-drama-write",
+            "short-drama-assets",
+            "short-drama-storyboard",
+            "short-drama-image-prompts",
+            "short-drama-video-prompts",
+            "short-drama-produce",
+            "short-drama-edit",
+            "short-drama-review",
+            "short-drama-breakdown"
+          ]
+        },
+        "resource": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "skill"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "drama_skills_import_reference",
+    "description": "从当前成员正式Asset导入图片或角色参考音频，固定保存到输入/<assetId>.<扩展名>并返回projectPath；不接受任意路径，不覆盖改变的已有文件。先调用此工具再在创作文档写真实REF。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "assetId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]+$"
+        }
+      },
+      "required": [
+        "projectId",
+        "assetId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "drama_skills_preview_production",
+    "description": "展示单一模态准确批次，不生成。image/video严格匹配当前IMG/SHOT/MOTION可复制提示词和真实REF；PLAN输入拒绝，SHOT绘制自身关键帧保留官方豁免。参考用途、控制边界与compiledPrompt完整展示后等待明确确认。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "episode": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "jobs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "image",
+                  "video",
+                  "tts",
+                  "music"
+                ]
+              },
+              "model": {
+                "type": "string"
+              },
+              "prompt": {
+                "type": "string"
+              },
+              "sourceDocument": {
+                "type": "string",
+                "enum": [
+                  "image-prompts",
+                  "storyboard",
+                  "video-prompts",
+                  "script",
+                  "cut-list"
+                ]
+              },
+              "sourceEntry": {
+                "type": "string"
+              },
+              "referenceAssetIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "可省略；如提供，必须逐项等于 referenceBindings 中按 order 排列的 assetId。不能只传资产而丢失语义。"
+              },
+              "aspectRatio": {
+                "type": "string",
+                "enum": [
+                  "9:16",
+                  "16:9",
+                  "1:1"
+                ]
+              },
+              "duration": {
+                "type": "number",
+                "minimum": 0.1
+              },
+              "resolution": {
+                "type": "string"
+              },
+              "voice": {
+                "type": "string"
+              },
+              "speed": {
+                "type": "number",
+                "minimum": 0.25,
+                "maximum": 4
+              },
+              "instrumental": {
+                "type": "boolean"
+              },
+              "size": {
+                "type": "string"
+              },
+              "aspect_ratio": {
+                "type": "string"
+              },
+              "n": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "seed": {
+                "type": "integer"
+              },
+              "quality": {
+                "type": "string"
+              },
+              "generate_audio": {
+                "type": "boolean"
+              },
+              "response_format": {
+                "type": "string",
+                "enum": [
+                  "mp3",
+                  "wav",
+                  "flac",
+                  "opus"
+                ]
+              },
+              "referenceBindings": {
+                "type": "array",
+                "maxItems": 16,
+                "description": "原生REF逐项绑定，path必须为本项目已下载产物或import_reference返回路径；角色音频character照抄来源。当前官方来源选择器不能表达reference_video。",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "assetId": {
+                      "type": "string",
+                      "pattern": "^[A-Za-z0-9_-]+$"
+                    },
+                    "slot_id": {
+                      "type": "string",
+                      "pattern": "^REF-[A-Z0-9][A-Z0-9-]{0,79}$"
+                    },
+                    "order": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "path": {
+                      "type": "string"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "role": {
+                      "type": "string",
+                      "enum": [
+                        "first_frame",
+                        "last_frame",
+                        "reference_image",
+                        "reference_audio"
+                      ]
+                    },
+                    "may_control": {
+                      "type": "array",
+                      "minItems": 1,
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "must_not_control": {
+                      "type": "array",
+                      "minItems": 1,
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "character": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "assetId",
+                    "slot_id",
+                    "order",
+                    "path",
+                    "label",
+                    "role",
+                    "may_control",
+                    "must_not_control"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "label",
+              "kind",
+              "prompt",
+              "sourceDocument",
+              "sourceEntry"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "projectId",
+        "episode",
+        "jobs"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "drama_skills_confirm_production",
+    "description": "仅在用户明确确认已展示的准确预览后调用；保存该批次确认，不生成。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "previewId": {
+          "type": "string"
+        },
+        "confirmed": {
+          "type": "boolean",
+          "const": true
+        }
+      },
+      "required": [
+        "projectId",
+        "previewId",
+        "confirmed"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "drama_skills_execute_production",
+    "description": "提交已经明确确认且输入未改动的原批次。逐项返回提交失败；已提交项继续跟踪，禁止自动重提。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "previewId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "projectId",
+        "previewId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "drama_skills_get_production",
+    "description": "恢复/查询已保存批次的原任务和制作成果；查询失败保留原任务编号。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "previewId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "projectId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "drama_skills_render_episode",
+    "description": "按已保存《剪辑单.md》后台剪辑：保留静帧运镜、原声/配音/音效/环境声、字幕高亮、四类画面文字与倒计时、自动接镜、颗粒和响度处理；使用免费 FFmpeg 渲染。素材路径使用项目中实际归档文件，立即返回本地任务编号。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "episode": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "burnSubtitles": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "projectId",
+        "episode"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "drama_skills_archive_project",
+    "description": "将创作文档和已制作媒体打包归档到当前成员资产，不生成摘要或额外校验文件。立即返回归档任务编号。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "projectId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "drama_skills_index_source",
+    "description": "使用原著实际章节解析器建立一次章节索引；不运行verify/hash/export。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "chapterUnit": {
+          "type": "string",
+          "enum": [
+            "章",
+            "回",
+            "节"
+          ]
+        }
+      },
+      "required": [
+        "projectId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "drama_skills_read_source_chapters",
+    "description": "按已建立的原著索引读取指定章节或首尾覆盖抽样，不把整本小说放入上下文。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "chapters": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "sampleCount": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "projectId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "drama_skills_read_analysis",
+    "description": "读取原套件source-analysis中的指定分析产物。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "part": {
+          "type": "string",
+          "enum": [
+            "progress",
+            "triage",
+            "chapter",
+            "story-units",
+            "rhythm-and-emotion",
+            "characters",
+            "world",
+            "adaptation-value",
+            "episode-candidates"
+          ]
+        },
+        "chapter": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "projectId",
+        "part"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "drama_skills_write_analysis",
+    "description": "保存原套件source-analysis中的指定分析产物，保留快评停靠和断点记录。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "part": {
+          "type": "string",
+          "enum": [
+            "progress",
+            "triage",
+            "chapter",
+            "story-units",
+            "rhythm-and-emotion",
+            "characters",
+            "world",
+            "adaptation-value",
+            "episode-candidates"
+          ]
+        },
+        "chapter": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "content": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "projectId",
+        "part",
+        "content"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "drama_skills_import_source",
+    "description": "从当前成员已上传的UTF-8文本资产导入原著；无需把整本文本经对话回传。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "assetId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "projectId",
+        "assetId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "drama_skills_register_benchmark",
+    "description": "登记当前成员视频 Asset 为对标：明确允许用途、依据、外传许可和本轮问题；原片只存输入/对标，不进入正常交付。不调用外部模型。一个 referenceId 下多集使用同一登记；已有绑定不覆盖。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "referenceId": {
+          "type": "string",
+          "pattern": "^REF-[A-Z0-9][A-Z0-9-]{0,59}$"
+        },
+        "episode": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "assetId": {
+          "type": "string"
+        },
+        "permittedUse": {
+          "type": "string",
+          "enum": [
+            "study",
+            "owned",
+            "licensed"
+          ]
+        },
+        "basis": {
+          "type": "string"
+        },
+        "allowExternalModel": {
+          "type": "boolean"
+        },
+        "question": {
+          "type": "string"
+        },
+        "playbackSurface": {
+          "type": "string"
+        },
+        "productionForm": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "projectId",
+        "referenceId",
+        "episode",
+        "assetId",
+        "permittedUse",
+        "allowExternalModel",
+        "question",
+        "playbackSurface",
+        "productionForm"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "drama_skills_run_breakdown",
+    "description": "执行固定免费本地拆解任务，稳定 requestId 重复调用仅返回原任务；中断不自动重跑。measure 测量切点与拼图；audio 测有声/响度；subtitle-sheet 校准；subtitles 只测字形事件不认字；shots 从同源测量切片/抽帧；transcript 将提供的定时转写挂到测量副本；plan 估算本项目分集；profile 明选各系列每集一份任务同尺对照。不生成模型内容，不运行任意脚本/URL/额外摘要。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "requestId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{1,80}$"
+        },
+        "operation": {
+          "type": "string",
+          "enum": [
+            "measure",
+            "audio",
+            "subtitle-sheet",
+            "subtitles",
+            "shots",
+            "transcript",
+            "plan",
+            "profile"
+          ]
+        },
+        "referenceId": {
+          "type": "string"
+        },
+        "episode": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sceneThreshold": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1
+        },
+        "band": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        },
+        "color": {
+          "type": "string",
+          "pattern": "^[0-9a-fA-F]{6}$"
+        },
+        "measureTaskId": {
+          "type": "string"
+        },
+        "audioTaskId": {
+          "type": "string"
+        },
+        "transcript": {
+          "type": "string"
+        },
+        "transcriptFormat": {
+          "type": "string",
+          "enum": [
+            "srt",
+            "vtt",
+            "json"
+          ]
+        },
+        "taskIds": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": {
+            "type": "string"
+          }
+        },
+        "openingEpisodes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "speakers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "projectId",
+        "requestId",
+        "operation"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "drama_skills_get_breakdown",
+    "description": "只读原拆解 requestId、状态、真实 JSON 结果和存在的私有工程文件；任务中断保留原结果目录，不自动重新提交。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "requestId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "projectId",
+        "requestId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "drama_skills_set_continuation_route",
+    "description": "仅在创作者明确选择后持久保存续接方式。independent_starts 仍须 owner 补真实起始帧并改写接受正文；relay_external 仅移交创作者。待续接/不可提交不得投产。改变选择撤销未执行视频预览，不改变其他档案，也不等于生产确认。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "route": {
+          "type": "string",
+          "enum": [
+            "independent_starts",
+            "relay_external"
+          ]
+        },
+        "confirmed": {
+          "type": "boolean",
+          "const": true
+        }
+      },
+      "required": [
+        "projectId",
+        "route",
+        "confirmed"
+      ],
+      "additionalProperties": false
+    }
+  }
+]

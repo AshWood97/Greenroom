@@ -1,0 +1,7 @@
+{
+  "id":"kineo","title":"Kineo","group":"ai-drama-tools","kind":"app",
+  "upstream":"https://github.com/Agions/kineo","revision":"45572564546fe885bf5b76adccccc9b073f7c5af","license":"MIT",
+  "runtime":{ "lifecycle": {"launcher":"node","readyPath":"/api/greenroom/lifecycle"},"command":"node","args":["greenroom/server.mjs"],"cwd":"/opt/kineo","port":18808,
+    "env":{"PORT":"18808","GREENROOM_PLUGIN_ROOT":"${ROOT}","GREENROOM_MANAGED_URL":"${BRIDGE_URL}","GREENROOM_BASE_PATH":"${BASE_PATH}"}},
+  "ui":{"basePath":"/plugins/kineo/","upstreamPath":"/"}
+}

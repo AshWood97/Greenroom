@@ -1,0 +1,15 @@
+{
+  "id": "director-skills",
+  "title": "导演Skills",
+  "group": "ai-drama-skills",
+  "kind": "skills",
+  "releaseBatch": "aigc-skills",
+  "upstream": "https://github.com/kangarooking/director-skills",
+  "revision": "301e6e72199f28b8ea82cd48ff06ab9ae49d0ee5",
+  "license": "MIT",
+  "runtime": null,
+  "ui": null,
+  "skillRoots": [
+    "."
+  ]
+}

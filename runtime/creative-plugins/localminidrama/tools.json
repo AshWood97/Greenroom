@@ -1,0 +1,408 @@
+[
+  {
+    "name": "localminidrama_projects",
+    "description": "列出成员的短剧项目",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "localminidrama_create_project",
+    "description": "创建短剧项目",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "body": {
+          "type": "object",
+          "description": "LocalMiniDrama 原业务字段，保留剧本、角色、场景及分镜内容。"
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "localminidrama_get_project",
+    "description": "读取短剧及分集、角色、场景",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "localminidrama_update_project",
+    "description": "更新短剧标题、简介和创作设置",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "body": {
+          "type": "object",
+          "description": "LocalMiniDrama 原业务字段，保留剧本、角色、场景及分镜内容。"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "localminidrama_save_outline",
+    "description": "保存项目大纲",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "body": {
+          "type": "object",
+          "description": "LocalMiniDrama 原业务字段，保留剧本、角色、场景及分镜内容。"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "localminidrama_save_characters",
+    "description": "保存项目角色",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "body": {
+          "type": "object",
+          "description": "LocalMiniDrama 原业务字段，保留剧本、角色、场景及分镜内容。"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "localminidrama_save_episodes",
+    "description": "保存项目分集剧本",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "body": {
+          "type": "object",
+          "description": "LocalMiniDrama 原业务字段，保留剧本、角色、场景及分镜内容。"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "localminidrama_generate_characters",
+    "description": "从剧本生成角色并持久入库，返回任务编号",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "body": {
+          "type": "object",
+          "description": "LocalMiniDrama 原业务字段，保留剧本、角色、场景及分镜内容。"
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "localminidrama_generate_story",
+    "description": "生成分集剧本；body 必须包含 drama_id",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "body": {
+          "type": "object",
+          "description": "LocalMiniDrama 原业务字段，保留剧本、角色、场景及分镜内容。"
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "localminidrama_generate_storyboards",
+    "description": "为指定分集生成分镜并入库",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "body": {
+          "type": "object",
+          "description": "LocalMiniDrama 原业务字段，保留剧本、角色、场景及分镜内容。"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "localminidrama_storyboards",
+    "description": "读取指定分集的分镜",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "localminidrama_create_storyboard",
+    "description": "新增分镜",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "body": {
+          "type": "object",
+          "description": "LocalMiniDrama 原业务字段，保留剧本、角色、场景及分镜内容。"
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "localminidrama_update_storyboard",
+    "description": "更新分镜内容与提示词",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "body": {
+          "type": "object",
+          "description": "LocalMiniDrama 原业务字段，保留剧本、角色、场景及分镜内容。"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "localminidrama_generate_character_image",
+    "description": "后台生成角色参考图",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "body": {
+          "type": "object",
+          "description": "LocalMiniDrama 原业务字段，保留剧本、角色、场景及分镜内容。"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "localminidrama_generate_scene_image",
+    "description": "后台生成场景图",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "body": {
+          "type": "object",
+          "description": "LocalMiniDrama 原业务字段，保留剧本、角色、场景及分镜内容。"
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "localminidrama_generate_image",
+    "description": "后台生成分镜或自由创作图片，返回持久业务编号",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "body": {
+          "type": "object",
+          "description": "LocalMiniDrama 原业务字段，保留剧本、角色、场景及分镜内容。"
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "localminidrama_image",
+    "description": "读取原图片任务及当前失败原因",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "localminidrama_generate_video",
+    "description": "后台生成分镜视频，返回持久业务编号",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "body": {
+          "type": "object",
+          "description": "LocalMiniDrama 原业务字段，保留剧本、角色、场景及分镜内容。"
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "localminidrama_video",
+    "description": "读取原视频任务及当前失败原因",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "localminidrama_resume_video",
+    "description": "继续查询已有视频任务，不重新提交",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "localminidrama_task",
+    "description": "读取后台业务任务状态",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "task_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "task_id"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "localminidrama_merge_videos",
+    "description": "创建分集合片任务",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "body": {
+          "type": "object",
+          "description": "LocalMiniDrama 原业务字段，保留剧本、角色、场景及分镜内容。"
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "localminidrama_merge",
+    "description": "查询分集合片任务",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "localminidrama_assets",
+    "description": "列出成员私有素材",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false
+    }
+  }
+]

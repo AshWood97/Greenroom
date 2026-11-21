@@ -1,0 +1,5 @@
+{
+  "moyin.backend": {"component":"bridge","runtime":"node","cwd":"/opt/moyin","consumer":"greenroom-startup.mjs"},
+  "toonflow.backend": {"component":"bridge","runtime":"bun","cwd":"/opt/toonflow","consumer":"greenroom-startup.mjs"},
+  "aid-studio.adapter": {"component":"bridge","runtime":"node","cwd":"/opt/creative-plugins/aid-studio","consumer":"adapter.mjs","kind":"adapter"}
+}

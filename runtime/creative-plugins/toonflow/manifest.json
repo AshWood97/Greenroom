@@ -1,0 +1,7 @@
+{
+  "id": "toonflow", "title": "Toonflow", "group": "ai-drama-tools", "kind": "app",
+  "upstream": "https://github.com/HBAI-Ltd/Toonflow-app", "revision": "6086cdffceb704a632eca143dd16cd461a78cdac", "license": "MIT",
+  "runtime": { "lifecycle": {"launcher":"bun","readyPath":"/api/greenroom/lifecycle"}, "command": "bun", "args": ["build/server/index.js"], "cwd": "/opt/toonflow", "port": 18802,
+    "env": { "TOONFLOW_SERVER_PORT": "18802", "TOONFLOW_DATA_DIR": "${ROOT}", "GREENROOM_PLUGIN_ROOT": "${ROOT}", "GREENROOM_MANAGED_URL": "${BRIDGE_URL}", "GREENROOM_BROKER_URL": "${BROKER_URL}", "GREENROOM_BASE_PATH": "${BASE_PATH}", "NODE_ENV": "production" } },
+  "ui": { "basePath": "/plugins/toonflow/", "upstreamPath": "/" }
+}

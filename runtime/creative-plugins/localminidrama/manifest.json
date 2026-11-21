@@ -1,0 +1,22 @@
+{
+  "id": "localminidrama",
+  "title": "LocalMiniDrama",
+  "group": "ai-drama-tools",
+  "kind": "app",
+  "upstream": "https://github.com/xuanyustudio/LocalMiniDrama",
+  "revision": "3fbcda9713ca545979dff9e75d21bed53694188f",
+  "license": "MIT",
+  "runtime": { "lifecycle": {"launcher":"node","readyPath":"/api/greenroom/lifecycle"},
+    "command": "node",
+    "args": ["greenroom-start.cjs"],
+    "cwd": "/opt/localminidrama/backend-node",
+    "port": 18805,
+    "env": {
+      "PORT": "18805",
+      "GREENROOM_PLUGIN_ROOT": "${ROOT}",
+      "GREENROOM_MANAGED_URL": "${BRIDGE_URL}",
+      "GREENROOM_BASE_PATH": "${BASE_PATH}"
+    }
+  },
+  "ui": { "basePath": "/plugins/localminidrama/", "upstreamPath": "/" }
+}

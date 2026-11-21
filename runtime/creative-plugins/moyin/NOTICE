@@ -1,0 +1,19 @@
+魔因漫创 (Moyin Creator)
+Copyright (c) 2025 hotflow2024 and Moyin Creator contributors.
+Upstream: https://github.com/MemeCalculate/moyin-creator
+Revision: 7e5c5655de94d49885e13c369f0a71212893a0aa
+License: GNU Affero General Public License v3.0 or later (LICENSE).
+
+Modified for Greenroom: original renderer web transport, member-private project/media
+storage, managed model access, persistent background jobs and DSH MCP integration.
+The running UI offers the complete corresponding modified source for download.
+
+Build the already-adapted source archive with Node.js 24:
+  npm ci --ignore-scripts --no-audit --no-fund
+  npx vite build --config vite.greenroom.config.ts
+  npx esbuild src/greenroom-worker.ts --bundle --platform=node --format=esm --target=node24 --packages=external --alias:@=./src --alias:@opencut/ai-core=./src/packages/ai-core --define:import.meta.env.BASE_URL='"/plugins/moyin/"' --outfile=greenroom-worker.mjs
+Run node greenroom-server.mjs with GREENROOM_PLUGIN_ROOT set to a writable member
+private directory, GREENROOM_MANAGED_URL to the authenticated member bridge,
+GREENROOM_BROKER_URL to its OpenAI-compatible broker, and GREENROOM_BASE_PATH to
+/plugins/moyin/. The source archive includes greenroom-integration/ with the
+upstream preparation recipe, Dockerfile, manifest and static MCP declarations.

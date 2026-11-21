@@ -1,0 +1,498 @@
+.panelContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 18px 24px;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.subtitle {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.cardsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.apiCard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+}
+
+.cardTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.cardName {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.badgeOk,
+.badgeWarn,
+.badgeInfo,
+.badgeMuted {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badgeOk {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+}
+
+.badgeWarn {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+}
+
+.badgeInfo {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+}
+
+.badgeMuted {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-text-muted);
+}
+
+.cardRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.cardVal {
+  color: var(--color-text-primary);
+  font-family: monospace;
+  font-weight: 600;
+  text-align: right;
+  word-break: break-all;
+}
+
+.cardNote {
+  margin-top: 2px;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--color-text-muted);
+}
+
+.sectionHint {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-top: 4px;
+}
+
+.warningBox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 14px;
+  padding: 8px 10px;
+  border-radius: 4px;
+  background: rgba(245, 158, 11, 0.1);
+  color: #fbbf24;
+  font-size: 12px;
+}
+
+.modelGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.modelBlock {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  padding: 14px;
+}
+
+.modelBlockHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.modelBlockTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.kindCount {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  font-family: monospace;
+}
+
+.modelChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.modelChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+
+.modelChipOff {
+  opacity: 0.35;
+}
+
+.modelChipId {
+  font-family: monospace;
+  font-size: 10px;
+  color: var(--color-text-muted);
+}
+
+.modelChipBadge {
+  padding: 0 4px;
+  border-radius: 3px;
+  background: rgba(16, 185, 129, 0.18);
+  color: #34d399;
+  font-size: 10px;
+}
+
+.emptyHint {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.huobaoGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.kindPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  padding: 14px;
+}
+
+.kindHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.kindActions {
+  display: flex;
+  gap: 6px;
+}
+
+.checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.checkRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.checkRow:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.checkRow input {
+  accent-color: #38bdf8;
+}
+
+.checkLabel {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.checkId {
+  font-family: monospace;
+  font-size: 10px;
+  color: var(--color-text-muted);
+}
+
+.checkMissing {
+  font-size: 10px;
+  color: #fbbf24;
+  white-space: nowrap;
+}
+
+.noticeOk,
+.noticeError {
+  margin: 14px 0 0;
+  font-size: 12px;
+}
+
+.noticeOk {
+  color: #34d399;
+}
+
+.noticeError {
+  color: #f87171;
+}
+
+.providerId {
+  font-family: monospace;
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.providerValue {
+  font-family: monospace;
+  color: var(--color-text-primary);
+  word-break: break-all;
+}
+
+.testResult {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+.testResultOk {
+  background: rgba(16, 185, 129, 0.1);
+  color: #34d399;
+}
+
+.testResultError {
+  background: rgba(239, 68, 68, 0.1);
+  color: #f87171;
+}
+
+.pulledTitle {
+  margin-bottom: 6px;
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.pulledList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-height: 140px;
+  overflow-y: auto;
+}
+
+.providerEmpty {
+  padding: 36px 0;
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+.loadingRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.errorRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  color: #ef4444;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.gatewaySection {
+  padding: 22px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-surface);
+}
+
+.gatewayHeading,
+.directoryHeading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.gatewayHeading { font-size: 19px; }
+.directoryHeading { font-size: 15px; }
+
+.gatewayDescription {
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  margin: 8px 0 16px;
+}
+
+.gatewayDetails {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 440px));
+  align-items: start;
+  gap: 16px 28px;
+}
+
+.gatewayDetails dl { margin: 4px 0 0; }
+.gatewayDetails dl div {
+  display: grid;
+  grid-template-columns: 85px minmax(0, 1fr);
+  gap: 10px;
+  font-size: 13px;
+  padding: 7px 0;
+}
+.gatewayDetails dt { color: var(--color-text-secondary); }
+.gatewayDetails dd {
+  margin: 0;
+  font-family: monospace;
+  color: var(--color-text-primary);
+  overflow-wrap: anywhere;
+}
+
+.gatewayDetails form > p {
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.gatewayDetails form > label {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+
+.gatewayDetails form input { width: 100%; }
+
+.directory {
+  border-top: 1px solid var(--color-border-subtle);
+  margin-top: 20px;
+  padding-top: 16px;
+}
+
+.directoryTools {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  margin: 12px 0;
+}
+
+.directoryTools input {
+  width: min(100%, 285px);
+  padding: 8px 10px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 7px;
+  color: var(--color-text-primary);
+  background: var(--color-bg-surface);
+}
+
+.directoryChips {
+  max-height: 196px;
+  overflow: auto;
+  align-content: flex-start;
+  overflow-wrap: anywhere;
+}
+
+.directory .kindCount,
+.directory .cardNote { color: var(--color-text-secondary); }
+
+.directoryChips .modelChip { max-width: 100%; font-size: 12px; }
+.additionalAccess { display: grid; gap: 12px; }
+.additionalAccess .apiCard > button { align-self: flex-start; }
+
+.profileButton {
+  padding: 0 4px;
+  color: #7dd3fc;
+  background: transparent;
+  border: 0;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.profileButton:hover, .profileButton:focus-visible {
+  background: #123649;
+}

@@ -1,20 +1,26 @@
 {
-  "name": "greenroom-workspace",
-  "version": "0.1.0",
+  "name": "greenroom-web",
   "private": true,
-  "license": "Apache-2.0",
+  "version": "0.0.21",
   "type": "module",
-  "engines": {
-    "node": ">=24.9.0"
-  },
   "scripts": {
-    "start": "node --disable-warning=ExperimentalWarning server.mjs",
-    "plugin": "node scripts/plugin.mjs",
-    "test": "node --disable-warning=ExperimentalWarning --test"
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "test:canvas": "node --test tests/verify-canvas-managed.mjs"
   },
   "dependencies": {
-    "@deepseek-ai/dsh": "0.2.2-rc.5",
-    "@modelcontextprotocol/sdk": "1.32.1",
-    "pnpm": "11.0.0"
-  }
+    "lucide-react": "^1.16.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "tsx": "^4.23.15",
+    "typescript": "^5.7.3",
+    "vite": "^6.2.0"
+  },
+  "packageManager": "pnpm@9.15.0"
 }

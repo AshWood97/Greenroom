@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>首映创作室 · 审阅</title>
+  <link rel="stylesheet" href="review.css">
+  <script type="module" src="review.mjs"></script>
+</head>
+<body>
+  <header><div><h1>首映创作室</h1><p>观看、比较，给下一版留下准确意见</p></div><label>工程 <select id="project"><option value="">选择工程</option></select></label></header>
+  <main>
+    <section class="workspace">
+      <div class="selectors"><label>当前版本 <select id="cut"></select></label><label>比较版本 <select id="compare"><option value="">不比较</option></select></label></div>
+      <p id="production-status" role="status"></p>
+      <div id="empty" class="empty">完成渲染后，将成片登记为审阅版本即可开始。</div>
+      <div id="players" hidden>
+        <div class="screens">
+          <div><div id="stage" class="stage"><video id="video" controls preload="metadata" playsinline></video><svg id="pin" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" hidden><circle id="dot" r="1.3"></circle></svg></div><p id="primary-label" class="caption"></p></div>
+          <div id="comparison" hidden><video id="second" muted preload="metadata" playsinline></video><p id="secondary-label" class="caption"></p></div>
+        </div>
+        <div class="transport"><button id="back" type="button">← 上一帧</button><button id="forward" type="button">下一帧 →</button><span id="time">0.000s · 第 0 帧</span><input id="seek" type="range" min="0" max="0" step="1" value="0" aria-label="逐帧定位"><a id="download" download>下载成片</a></div>
+        <p class="hint">点击画面标记位置，或用左右方向键逐帧查看。比较版本会同步播放与定位。</p>
+        <div class="note-actions"><button id="frame-note" type="button">添加此帧批注</button><button id="film-note" type="button">添加整片意见</button></div>
+        <form id="note-form" hidden><label id="note-position" for="note-text"></label><textarea id="note-text" rows="3" maxlength="4000" placeholder="写下你希望修改的内容" required></textarea><div><button type="submit">保存批注</button><button id="cancel" type="button" class="secondary">取消</button></div></form>
+      </div>
+    </section>
+    <aside><div class="notes-heading"><h2>意见与回应</h2><button id="send" type="button" disabled>发送本版意见</button></div><p id="sent" class="hint"></p><div id="notes"></div></aside>
+  </main>
+  <p id="status" role="status" aria-live="polite"></p>
+  <footer>来源：<a href="https://github.com/talsiach/take-one" target="_blank" rel="noreferrer">talsiach/take-one</a> · MIT / Apache-2.0</footer>
+</body>
+</html>

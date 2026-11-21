@@ -1,0 +1,26 @@
+{
+  "id": "openmontage",
+  "title": "OpenMontage",
+  "group": "ai-drama-skills",
+  "kind": "skills",
+  "upstream": "https://github.com/OpenMontageInc/OpenMontage",
+  "revision": "fecb9a1e3cc23ef84de30b272059457a427f16f8",
+  "license": "AGPL-3.0-only",
+  "runtime": { "lifecycle": {"launcher":"python","readyPath":"/api/greenroom/lifecycle"},
+    "command": "/opt/openmontage/.venv/bin/python",
+    "args": ["/opt/openmontage/greenroom/server.py"],
+    "cwd": "/opt/openmontage",
+    "port": 18811,
+    "env": {
+      "XDG_CONFIG_HOME": "/tmp/chromium-config",
+      "XDG_CACHE_HOME": "/tmp/chromium-cache",
+      "PORT": "18811",
+      "GREENROOM_PLUGIN_ROOT": "${ROOT}",
+      "GREENROOM_MANAGED_URL": "${BRIDGE_URL}",
+      "GREENROOM_BROKER_URL": "${BROKER_URL}",
+      "GREENROOM_BASE_PATH": "${BASE_PATH}"
+    }
+  },
+  "ui": { "basePath": "/plugins/openmontage/", "upstreamPath": "/" },
+  "skillRoots": ["."]
+}

@@ -1,0 +1,44 @@
+[
+  {
+    "name": "vimax_narrative_planning",
+    "description": "调用 ViMax 原生创意/剧本规划函数，生成角色、分镜、镜头和相机树。保留原生工程，后台运行。可通过 revision_target/revision_instruction 修改已有文本工件；不生成媒体。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "session_id": { "type": "string" },
+        "idea": { "type": "string" },
+        "script": { "type": "string" },
+        "user_requirement": { "type": "string" },
+        "style": { "type": "string" },
+        "revision_target": { "type": "string" },
+        "revision_instruction": { "type": "string" }
+      }
+    }
+  },
+  {
+    "name": "vimax_novel_planning",
+    "description": "调用 ViMax 原生小说规划，生成事件、相关片段、场景与全局设定。需要管理员启用文本、embedding 和 rerank 托管模型；不生成媒体。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "session_id": { "type": "string" },
+        "novel_text": { "type": "string" },
+        "user_requirement": { "type": "string" },
+        "style": { "type": "string" }
+      },
+      "required": ["novel_text"]
+    }
+  },
+  {
+    "name": "vimax_render_video",
+    "description": "从 ViMax 原生工程已有的结构化剧本开始生成角色图、关键帧、视频片段和成片；使用原流水线及成员私有媒体，关闭页面后继续。缺少依赖时返回具体缺项。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "session_id": { "type": "string" },
+        "mode": { "type": "string", "default": "foreground" },
+        "force": { "type": "boolean", "default": false }
+      }
+    }
+  }
+]

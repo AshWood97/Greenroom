@@ -1,0 +1,13 @@
+{
+  "id": "take-one",
+  "title": "首映创作室",
+  "group": "ai-drama-skills",
+  "kind": "skills",
+  "upstream": "https://github.com/talsiach/take-one",
+  "revision": "43fd27b8878241deb50a5884a154b173272b858f",
+  "license": "MIT AND Apache-2.0",
+  "runtime": null,
+  "ui": { "managed": true, "basePath": "/plugins/take-one/" },
+  "skillRoots": ["take-one"],
+  "knowledgeRoot": "/opt/creative-skills/take-one/take-one"
+}

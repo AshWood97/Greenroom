@@ -1,0 +1,24 @@
+{
+  "id": "drama-skills",
+  "title": "drama-skills",
+  "group": "ai-drama-skills",
+  "kind": "skills",
+  "upstream": "https://github.com/zenstory-ai/drama-skills",
+  "revision": "3d813c30871b4db5f2387d83bdc3a49db8ce7b2b",
+  "license": "MIT",
+  "runtime": { "lifecycle": {"launcher":"python","readyPath":"/api/greenroom/lifecycle"},
+    "command": "/opt/drama-skills/.venv/bin/python",
+    "args": ["/opt/drama-skills/greenroom/server.py"],
+    "cwd": "/opt/drama-skills",
+    "port": 18812,
+    "env": {
+      "PORT": "18812",
+      "GREENROOM_PLUGIN_ROOT": "${ROOT}",
+      "GREENROOM_MANAGED_URL": "${BRIDGE_URL}",
+      "GREENROOM_BROKER_URL": "${BROKER_URL}",
+      "GREENROOM_BASE_PATH": "${BASE_PATH}"
+    }
+  },
+  "ui": { "basePath": "/plugins/drama-skills/", "upstreamPath": "/" },
+  "skillRoots": ["."]
+}

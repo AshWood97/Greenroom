@@ -1,0 +1,178 @@
+[
+  {
+    "name": "moneyprinter_script",
+    "description": "根据主题生成视频文案",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "body": {
+          "type": "object",
+          "description": "MoneyPrinterTurbo 原生请求字段。视频支持托管生图 openai_image、托管生视频 wavespeed，以及上传的 local 素材。"
+        }
+      },
+      "required": [
+        "body"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "moneyprinter_terms",
+    "description": "根据文案生成顺序关键词",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "body": {
+          "type": "object",
+          "description": "MoneyPrinterTurbo 原生请求字段。视频支持托管生图 openai_image、托管生视频 wavespeed，以及上传的 local 素材。"
+        }
+      },
+      "required": [
+        "body"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "moneyprinter_social_metadata",
+    "description": "生成视频标题、简介与话题",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "body": {
+          "type": "object",
+          "description": "MoneyPrinterTurbo 原生请求字段。视频支持托管生图 openai_image、托管生视频 wavespeed，以及上传的 local 素材。"
+        }
+      },
+      "required": [
+        "body"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "moneyprinter_create_video",
+    "description": "后台生成短视频，返回持久任务编号；字幕、转场、画幅、配音参数沿用原生字段",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "body": {
+          "type": "object",
+          "description": "MoneyPrinterTurbo 原生请求字段。视频支持托管生图 openai_image、托管生视频 wavespeed，以及上传的 local 素材。"
+        }
+      },
+      "required": [
+        "body"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "moneyprinter_create_audio",
+    "description": "创建配音后台任务",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "body": {
+          "type": "object",
+          "description": "MoneyPrinterTurbo 原生请求字段。视频支持托管生图 openai_image、托管生视频 wavespeed，以及上传的 local 素材。"
+        }
+      },
+      "required": [
+        "body"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "moneyprinter_create_subtitle",
+    "description": "创建字幕后台任务",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "body": {
+          "type": "object",
+          "description": "MoneyPrinterTurbo 原生请求字段。视频支持托管生图 openai_image、托管生视频 wavespeed，以及上传的 local 素材。"
+        }
+      },
+      "required": [
+        "body"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "moneyprinter_tasks",
+    "description": "列出成员的生成任务",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "moneyprinter_task",
+    "description": "查询原任务、进度、真实失败原因和私有产物",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "task_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "task_id"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "moneyprinter_resume",
+    "description": "恢复已有任务；托管素材复用原平台任务编号",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "moneyprinter_materials",
+    "description": "列出已上传的成员视频素材",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "moneyprinter_music",
+    "description": "列出可用的背景音乐",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "moneyprinter_export",
+    "description": "将已有任务成片、音频和字幕归档到成员资产库",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "task_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "task_id"
+      ],
+      "additionalProperties": false
+    }
+  }
+]

@@ -1,0 +1,682 @@
+[
+  {
+    "name": "openslop_get_catalog",
+    "description": "读取管理员配置的模型、默认参数与原生 OSML 创作规范、六转场/十二运动选项。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "openslop_list_projects",
+    "description": "列出当前成员原OpenSlop工程。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "openslop_create_project",
+    "description": "创建原OpenSlop工程，保留原编辑器、时间轴与OSML格式。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "title"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "openslop_get_project",
+    "description": "读取当前成员工程、原OSML、渲染设置、生成记录和任务。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "projectId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "openslop_set_script",
+    "description": "保存原OSML剧本并同步原UI。先get_catalog读取原规范；场景分隔例 --- Scene 1 ---，内容例 <image id=\"shot-1\" motion=\"kenBurnsIn\">画面提示词</image>。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "script": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "projectId",
+        "script"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "openslop_generate_script",
+    "description": "通过管理员批准的文本模型按原生 OSML 规则创作剧本，解析成功后保存本人原工程；失败不覆盖，不生成图片、视频或执行代码。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "prompt": {
+          "type": "string",
+          "minLength": 1
+        },
+        "model": {
+          "type": "string",
+          "description": "管理员已批准的文本模型 ID，省略使用默认。"
+        }
+      },
+      "required": [
+        "projectId",
+        "prompt"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "openslop_update_settings",
+    "description": "更新原渲染与剧本设置，含六种转场、字幕、胶片颗粒、RGB分离。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "videoSettings": {
+          "type": "object",
+          "properties": {
+            "transitionType": {
+              "type": "string",
+              "enum": [
+                "none",
+                "fade",
+                "slide",
+                "wipe",
+                "flip",
+                "clockWipe",
+                "iris"
+              ]
+            },
+            "aspectRatio": {
+              "type": "string",
+              "enum": [
+                "16:9",
+                "9:16"
+              ]
+            },
+            "captions": {
+              "type": "boolean"
+            },
+            "captionStyle": {
+              "type": "object",
+              "properties": {
+                "font": {
+                  "type": "string",
+                  "enum": [
+                    "inter",
+                    "montserrat",
+                    "poppins",
+                    "roboto",
+                    "jost",
+                    "robotoCondensed",
+                    "barlowCondensed",
+                    "oswald",
+                    "bebasNeue",
+                    "anton",
+                    "archivoBlack",
+                    "bangers"
+                  ]
+                },
+                "fontSize": {
+                  "type": "number",
+                  "minimum": 24,
+                  "maximum": 160
+                },
+                "casing": {
+                  "type": "string",
+                  "enum": [
+                    "none",
+                    "upper",
+                    "lower"
+                  ]
+                },
+                "alignX": {
+                  "type": "string",
+                  "enum": [
+                    "left",
+                    "center",
+                    "right"
+                  ]
+                },
+                "alignY": {
+                  "type": "string",
+                  "enum": [
+                    "top",
+                    "middle",
+                    "bottom"
+                  ]
+                },
+                "maxWordsPerLine": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 10
+                },
+                "reveal": {
+                  "type": "string",
+                  "enum": [
+                    "line",
+                    "word"
+                  ]
+                },
+                "base": {
+                  "type": "object",
+                  "properties": {
+                    "fill": {
+                      "type": "string"
+                    },
+                    "bold": {
+                      "type": "boolean"
+                    },
+                    "italic": {
+                      "type": "boolean"
+                    },
+                    "underline": {
+                      "type": "boolean"
+                    },
+                    "background": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "border": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "width": {
+                              "type": "number",
+                              "minimum": 5,
+                              "maximum": 100
+                            },
+                            "color": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "activeWord": {
+                  "type": "object",
+                  "properties": {
+                    "fill": {
+                      "type": "string"
+                    },
+                    "bold": {
+                      "type": "boolean"
+                    },
+                    "italic": {
+                      "type": "boolean"
+                    },
+                    "underline": {
+                      "type": "boolean"
+                    },
+                    "background": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "border": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "width": {
+                              "type": "number",
+                              "minimum": 5,
+                              "maximum": 100
+                            },
+                            "color": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            },
+            "filmGrain": {
+              "type": "boolean"
+            },
+            "rgbSplit": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
+        "scriptSettings": {
+          "type": "object",
+          "properties": {
+            "language": {
+              "type": "string"
+            },
+            "length": {
+              "type": "string",
+              "enum": [
+                "auto",
+                "under-30s",
+                "under-1m",
+                "1-3m",
+                "3-5m",
+                "5-10m",
+                "10-15m",
+                "15-20m",
+                "20-30m"
+              ]
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "auto",
+                "cinematic",
+                "faceless",
+                "explainer"
+              ]
+            },
+            "template": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "projectId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "openslop_list_elements",
+    "description": "读取工程原生内容元素、角色资产、素材结果和原任务状态。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "projectId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "openslop_update_element",
+    "description": "更新原画布一个元素的文字与生成/布局参数，支持裁切、循环、音量、十二种运动。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "elementId": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "attributes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "projectId",
+        "elementId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "openslop_generate_elements",
+    "description": "在无页面状态按原生依赖图生成指定元素；后台保存执行与原任务，立即返回业务编号。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "elementIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "projectId",
+        "elementIds"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "openslop_submit_generation",
+    "description": "提交明确的单项受管图片、视频、配音或音乐请求；已受理任务按原编号恢复。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "elementId": {
+          "type": "string"
+        },
+        "runId": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "image",
+            "video",
+            "tts",
+            "music"
+          ]
+        },
+        "prompt": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "duration": {
+          "type": "number"
+        },
+        "aspectRatio": {
+          "type": "string"
+        },
+        "resolution": {
+          "type": "string"
+        },
+        "referenceAssetIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "referenceImages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "voice": {
+          "type": "string"
+        },
+        "speed": {
+          "type": "number"
+        },
+        "frameImage": {
+          "type": "string"
+        },
+        "continuityFrames": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "connectorType": {
+          "type": "string",
+          "enum": [
+            "image",
+            "video",
+            "tts",
+            "music",
+            "sfx",
+            "voice"
+          ]
+        },
+        "inputs": {
+          "type": "object",
+          "properties": {
+            "prompt": {
+              "type": "string"
+            },
+            "attributes": {
+              "type": "object",
+              "additionalProperties": {
+                "type": [
+                  "string",
+                  "number"
+                ]
+              }
+            },
+            "reads": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "dependencies": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "prompt",
+            "attributes",
+            "reads",
+            "dependencies"
+          ],
+          "additionalProperties": false
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "instrumental": {
+          "type": "boolean"
+        },
+        "size": {
+          "type": "string"
+        },
+        "aspect_ratio": {
+          "type": "string"
+        },
+        "n": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "seed": {
+          "type": "integer"
+        },
+        "quality": {
+          "type": "string"
+        },
+        "generate_audio": {
+          "type": "boolean"
+        },
+        "response_format": {
+          "type": "string",
+          "enum": [
+            "mp3",
+            "wav",
+            "flac",
+            "opus"
+          ]
+        }
+      },
+      "required": [
+        "projectId",
+        "kind",
+        "prompt"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "openslop_import_asset",
+    "description": "把当前成员已有平台素材绑定到原画布元素并进入成员私有素材目录。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "elementId": {
+          "type": "string"
+        },
+        "assetId": {
+          "type": "string"
+        },
+        "mimeType": {
+          "type": "string"
+        },
+        "durationSec": {
+          "type": "number"
+        },
+        "textTimestamps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "text": {
+                "type": "string"
+              },
+              "start": {
+                "type": "number"
+              },
+              "end": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "text",
+              "start",
+              "end"
+            ]
+          }
+        }
+      },
+      "required": [
+        "projectId",
+        "elementId",
+        "assetId",
+        "mimeType"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "openslop_get_tasks",
+    "description": "查询原平台生成/渲染/归档任务；查询异常保留原因与任务编号，禁止重提生成。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "projectId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "openslop_render_project",
+    "description": "按原RenderLayout后台导出，六转场、十二运动、字幕/纹理/RGB/裁切/循环/多轨混音共用Revideo场景。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "resolution": {
+          "type": "string",
+          "enum": [
+            "480p",
+            "720p",
+            "1080p",
+            "1440p",
+            "4K"
+          ]
+        }
+      },
+      "required": [
+        "projectId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "openslop_archive_project",
+    "description": "归档原OSML工程、设置、生成记录与媒体到当前成员资产，不生成摘要或额外校验文件。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "projectId"
+      ],
+      "additionalProperties": false
+    }
+  }
+]

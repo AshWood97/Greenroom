@@ -1,0 +1,2904 @@
+[
+  {
+    "name": "arcreel_list_projects",
+    "description": "列出当前项目根下可供后续工具寻址的 ArcReel 项目，返回每个项目的 name、标题、内容模式与生成模式。缺少 project.json 或无法读取的目录不列出。只读，无副作用。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {},
+      "type": "object"
+    }
+  },
+  {
+    "name": "arcreel_create_project",
+    "description": "创建一个 ArcReel 项目并写入完整的项目元数据（标题、内容模式、生成模式、画面比例、旁白交付方式等），返回规范化后的项目 name 与 project.json 内容；后续工具以该 name 寻址项目。旁白交付方式缺省后期配音；选 use_tts 时省略的 TTS 模型、音色与语速以全局默认预填，写入后成为项目快照。同名项目已存在时返回 project_exists，不覆盖。广告/短片项目（content_mode=ad）不接受 default_duration 与宫格分镜，target_duration 与 brief 仅广告/短片项目可用。元数据写入失败时回滚已创建的项目目录。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "description": "项目唯一标识，只能包含字母、数字和连字符；后续工具以它寻址项目",
+          "type": "string"
+        },
+        "title": {
+          "default": "",
+          "description": "用户可见的项目标题",
+          "type": "string"
+        },
+        "content_mode": {
+          "default": "narration",
+          "description": "内容模式：narration 说书解说、drama 剧集、ad 广告/短片",
+          "enum": [
+            "narration",
+            "drama",
+            "ad"
+          ],
+          "type": "string"
+        },
+        "generation_mode": {
+          "default": "storyboard",
+          "description": "生成模式：storyboard 先出分镜图再生视频、reference_video 参考图直接生视频",
+          "enum": [
+            "storyboard",
+            "reference_video"
+          ],
+          "type": "string"
+        },
+        "grid_storyboard": {
+          "default": false,
+          "description": "是否使用宫格分镜；广告/短片项目不支持",
+          "type": "boolean"
+        },
+        "aspect_ratio": {
+          "default": "9:16",
+          "description": "画面比例，如 9:16、16:9",
+          "type": "string"
+        },
+        "default_duration": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "默认单镜时长（秒）；缺省不写入，由视频模型能力决定；广告/短片项目不可用"
+        },
+        "target_duration": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "成片目标时长（秒）；仅广告/短片项目可用"
+        },
+        "brief": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "创作简报（卖点、受众等）；仅广告/短片项目可用"
+        },
+        "narration_delivery": {
+          "default": "post_production",
+          "description": "旁白交付方式：post_production 后期配音（画外音文字随字幕交付，创作者自行配音）、use_tts 由 ArcReel 生成 TTS 旁白配音；创建后用户可在项目设置里修改",
+          "enum": [
+            "post_production",
+            "use_tts"
+          ],
+          "type": "string"
+        },
+        "audio_backend": {
+          "default": null,
+          "description": "TTS 模型，形如 provider/model；仅 use_tts 使用，省略时取全局默认音频模型",
+          "type": "string"
+        },
+        "narration_voice": {
+          "default": null,
+          "description": "旁白音色 id；仅 use_tts 使用，省略时取全局默认音色",
+          "type": "string"
+        },
+        "narration_speed": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "配音语速倍率（正数）；仅 use_tts 使用，省略时取全局默认，null 表示不向供应商传语速"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "arcreel_upload_source",
+    "description": "把一段文本源文规范化为 UTF-8 后写入项目 source/ 目录并登记，返回写入后的项目相对路径、识别出的原始编码与章节数。role=whole_source（默认）登记为整本源文的文件，接在文件清单末尾，供分集规划切分；只接受 .txt / .md 文件名，episode_N.txt 形式的文件名留给集文件，会被拒绝；同名文件的处理由 on_conflict 决定。role=episode 登记为一集自带原文的集：分配新集 ID、写入 source/episode_{集 ID}.txt、接在播出顺序末尾，另返回集 ID，用户自行拆好的分集逐个这样上传。剧情演绎项目用 source_kind 标明这份原文是小说（缺省）还是用户写好的成品剧本，其他创作类型忽略这个参数。on_conflict=replace 覆盖已登记的整本源文文件时，保留它在清单里的位置，按新旧文本的对齐重映射原文范围触及它的切出集；波及切出集时先不写入，返回 confirmation_required=true、按类分组的受影响集清单 impact 与 revision，把清单如实告知用户，确认后带上同一 revision 重新调用。要移除或退下的集还有排队或执行中的任务时拒绝。source/ 只经本工具与 edit_source_text 写入。写入项目文件。项目数据升级失败时拒绝执行，返回 project_migration_failed problem。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "filename": {
+          "description": "带 .txt 或 .md 扩展名的纯文件名（不含目录、不以点开头）",
+          "type": "string"
+        },
+        "content": {
+          "description": "源文件的文本内容",
+          "type": "string"
+        },
+        "on_conflict": {
+          "default": "fail",
+          "description": "source/ 下已有同名文件时的处理：fail 拒绝、replace 覆盖、rename 自动改名后写入；role=episode 时不适用",
+          "enum": [
+            "fail",
+            "replace",
+            "rename"
+          ],
+          "type": "string"
+        },
+        "role": {
+          "default": "whole_source",
+          "description": "whole_source：登记为整本源文的文件，接在文件清单末尾，供分集规划切分；episode：登记为一集自带原文的集，接在播出顺序末尾，分配新集 ID，逐集直接做脚本规划",
+          "enum": [
+            "whole_source",
+            "episode"
+          ],
+          "type": "string"
+        },
+        "source_kind": {
+          "anyOf": [
+            {
+              "enum": [
+                "novel",
+                "screenplay"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "源文件类型，只对剧情演绎项目生效，其他创作类型忽略：novel 小说（缺省），由 AI 改编；screenplay 用户写好的成品剧本，分集、台词与画外音照用作者原文。替换已登记的同名整本源文文件时保留它原有的类型"
+        },
+        "revision": {
+          "default": null,
+          "description": "on_conflict=replace 覆盖已登记的整本源文文件、波及切出集时，上一次调用返回的受影响集清单的 revision；用户确认清单后原样带回才写入",
+          "type": "string"
+        }
+      },
+      "required": [
+        "project",
+        "filename",
+        "content"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "arcreel_edit_source_text",
+    "description": "修改已登记的源文：filename 指整本源文的一个文件，episode_id 指一集自带原文或无原文的集的原文（无原文的集写入后转为自带原文）。切出集的原文由整本源文派生，要改就改它所在的整本源文文件。replacements 按片段替换，每个 old_text 须在当前原文里恰好出现一次；text 整段改写。改整本源文的文件时按改动前后的对齐重映射触及它的切出集：文字没变的集只平移，文字变了的集标「原文已重新规划」，整段被删的集退下或移除；波及切出集时先不写入，返回 confirmation_required=true、按类分组的受影响集清单 impact 与 revision，把清单如实告知用户，确认后带上同一 revision 重新调用。文件在 ArcReel 之外被改动过、尚未在 Web 端「分集」视图里更新分集账本时拒绝。删除、调序整本源文的文件由用户在「分集」视图里操作。写入项目文件。项目数据升级失败时拒绝执行，返回 project_migration_failed problem。",
+    "inputSchema": {
+      "$defs": {
+        "SourceReplacement": {
+          "additionalProperties": false,
+          "properties": {
+            "old_text": {
+              "description": "要替换的原文片段，须在当前原文里恰好出现一次，逐字匹配",
+              "minLength": 1,
+              "type": "string"
+            },
+            "new_text": {
+              "description": "替换成的文字；空串表示删掉这个片段",
+              "type": "string"
+            }
+          },
+          "required": [
+            "old_text",
+            "new_text"
+          ],
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "filename": {
+          "default": null,
+          "description": "要修改的整本源文文件名（source/ 下已登记的纯文件名，如 novel.txt）；与 episode_id 二选一",
+          "type": "string"
+        },
+        "episode_id": {
+          "default": null,
+          "description": "要修改原文的集 ID，只接受自带原文或无原文的集；切出集的原文要改整本源文的文件。与 filename 二选一",
+          "gt": 0,
+          "type": "integer"
+        },
+        "replacements": {
+          "default": null,
+          "description": "按片段修改：依次在当前原文里替换；与 text 二选一",
+          "items": {
+            "$ref": "#/$defs/SourceReplacement"
+          },
+          "minLength": 1,
+          "type": "array"
+        },
+        "text": {
+          "default": null,
+          "description": "整段改写后的完整原文；与 replacements 二选一",
+          "type": "string"
+        },
+        "revision": {
+          "default": null,
+          "description": "修改整本源文的文件、波及切出集时，上一次调用返回的受影响集清单的 revision；用户确认清单后原样带回才写入",
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "project"
+      ]
+    }
+  },
+  {
+    "name": "arcreel_get_workflow_plan",
+    "description": "读取项目的权威制作计划：内容现状、各 AI 操作的准入 status.operations、有序步骤、阻断原因、数据问题、活动任务观测、视频准入与建议的下一动作 next_action。每一步动手前先读它：用户点名的操作在 operations 里为 admitted 就执行，refused 时转述 reason；用户说继续时按 next_action 行动，next_alternatives 非空时由用户在并列选项中选。confirmed_request_durations 只作用于本次计划，不写入项目。只读，无副作用。项目数据升级失败时计划只含这一条 project_migration_failed 问题，下一动作指向修复。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "episode_id": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "要规划的集的集 ID（项目详情 episodes[].episode）；缺省时按播出顺序选定当前集"
+        },
+        "confirmed_request_durations": {
+          "additionalProperties": {
+            "exclusiveMinimum": 0,
+            "type": "integer"
+          },
+          "description": "已与用户确认的视频请求时长，{ 单元 id: 秒数 }；只作用于本次计划的视频准入判定",
+          "type": "object"
+        }
+      },
+      "type": "object",
+      "required": [
+        "project"
+      ]
+    }
+  },
+  {
+    "name": "arcreel_get_video_capabilities",
+    "description": "查询项目当前视频模型的能力（model 粒度：供应商、模型、支持的时长等）与项目偏好，并给出按项目生成模式定轴的时长约束 duration_constraints；全项目同一口径，无需指定剧集。参考生视频项目另含 reference_unit_durations（带图与无图的档位、各桶 endpoint_fixed 标志及成因；无图不可解析时附 problem）。只读，不向供应商发请求。视频模型未配置或能力无法解析时返回相应 problem。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        }
+      },
+      "type": "object",
+      "required": [
+        "project"
+      ]
+    }
+  },
+  {
+    "name": "arcreel_get_prompt_preview",
+    "description": "读取一个分镜条目或参考视频单元最终会送进图像 / 视频模型的提示词文本，与执行路径同一渲染出口，逐字等于生成时实际发出的提示词；某一侧提示词尚待生成或为空时，该侧带稳定的 unavailable 原因码而不是文本。只读：不向供应商发请求、不产生费用。项目数据升级失败时返回 project_migration_failed problem。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "script": {
+          "description": "剧本纯文件名（不含目录），如 episode_1.json",
+          "minLength": 1,
+          "type": "string"
+        },
+        "item_id": {
+          "description": "条目 id（segment_id / scene_id / shot_id / unit_id），如 E1S01",
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "project",
+        "script",
+        "item_id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "arcreel_get_generation_batch",
+    "description": "查询一个生成批次：成员逐个的任务状态、计数、建议轮询间隔 poll_after_seconds、是否已终结 done，终结后另附终态 generation_result（逐 ID 的成功 / 失败 / 阻断结局）。未终结时按 poll_after_seconds 间隔再次调用，直到 done=true。批次不属于本项目或不存在时返回 generation_batch_not_found。成片任务的 archive 显示成员资产归档状态，ready 时返回原成员 Asset，归档失败时保留成片和原任务。只读，无副作用。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "batch_id": {
+          "description": "生成批次 id，取自生成工具返回的 generation_batch.batch_id",
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "project",
+        "batch_id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "arcreel_cancel_generation_batch",
+    "description": "取消生成批次中仍在排队的成员，返回已取消（cancelled）、因已开始执行而跳过（skipped_running）与已终结而跳过（skipped_terminal）的任务 id。已开始执行的成员不可取消，照常跑完；重复调用安全。批次不属于本项目或不存在时返回 generation_batch_not_found。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "batch_id": {
+          "description": "生成批次 id，取自生成工具返回的 generation_batch.batch_id",
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "project",
+        "batch_id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "arcreel_get_project_content",
+    "description": "读取项目 project.json 的完整内容（标题、内容模式、生成模式、风格、分集与资产设定等）及其 canonical revision。episodes[] 的排列即播出顺序，每项的 episode 是集 ID（内部标识，不是第几集）。只读，无副作用。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        }
+      },
+      "type": "object",
+      "required": [
+        "project"
+      ]
+    }
+  },
+  {
+    "name": "arcreel_list_source_files",
+    "description": "列出项目 source/ 下的源文文件（UTF-8 的 .txt / .md），返回每个文件的项目相对路径、字节数与 etag，以及整份列表的 revision。只读，无副作用。读取正文用 get_source_text。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        }
+      },
+      "type": "object",
+      "required": [
+        "project"
+      ]
+    }
+  },
+  {
+    "name": "arcreel_get_source_text",
+    "description": "读取 source/ 下一个 UTF-8 源文文件的全文及其 revision 与 etag。只读，无副作用。source/ 之外的路径、非文本文件、symlink 与超过大小上限的文件会被拒绝。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "path": {
+          "description": "源文的项目相对路径，须位于 source/ 下，如 source/episode_1.txt；取自 list_source_files",
+          "type": "string"
+        }
+      },
+      "required": [
+        "project",
+        "path"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "arcreel_get_episode_script",
+    "description": "读取一集剧本的 JSON 正文及其 canonical revision。把返回的 revision 原样作为 patch_episode_script 的 base_revision；剧本被改动后 revision 随之变化，须重新读取。只读，无副作用。项目数据升级失败时不签发 revision，返回 project_migration_failed problem；按其明细修复后调用 retry_project_migration。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "script": {
+          "description": "剧本纯文件名（不含目录），如 episode_1.json",
+          "type": "string"
+        }
+      },
+      "required": [
+        "project",
+        "script"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "arcreel_get_script_plan_content",
+    "description": "读取指定集当前正式的 script_plan（剧本规划中间态，位于 drafts/episode_{集 ID}/）正文及其 canonical revision。只读，无副作用。项目不使用 script_plan 时返回 script_plan_not_applicable；该集尚无 script_plan 时返回 file_not_found。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "episode_id": {
+          "description": "集 ID：一集的内部标识，取自项目详情 episodes[].episode 或制作计划的 episode_id，不是播出顺序中的第几集",
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "project",
+        "episode_id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "arcreel_list_project_files",
+    "description": "列出可供诊断读取的项目业务文本文件：project.json、source/ 源文、scripts/ 剧本与 drafts/episode_N/ 下的 script_plan，返回路径、字节数与 etag，以及整份列表的 revision。敏感文件、symlink 与其他路径不列出。只读，无副作用。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        }
+      },
+      "type": "object",
+      "required": [
+        "project"
+      ]
+    }
+  },
+  {
+    "name": "arcreel_read_project_file",
+    "description": "读取一个项目业务文本文件的内容及其 revision 与 etag：JSON 文件返回解析后的对象，文本文件返回字符串。可读范围与 list_project_files 一致，敏感文件、symlink、越界路径与超过大小上限的文件会被拒绝。只读，无副作用。有专用读取工具的文件（get_project_content、get_source_text、get_episode_script、get_script_plan_content）优先使用专用工具。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "path": {
+          "description": "业务文件的项目相对路径，如 project.json、scripts/episode_1.json；取自 list_project_files",
+          "type": "string"
+        }
+      },
+      "required": [
+        "project",
+        "path"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "arcreel_list_pending_assets",
+    "description": "列出项目中尚无资产图的角色、场景、道具与商品（名称与描述摘要）；type 省略则汇总全部类型。只读，无副作用。项目数据升级失败时返回 project_migration_failed problem；按其明细修复后调用 retry_project_migration。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "type": {
+          "default": null,
+          "description": "资产类型；省略则汇总全部类型的待生成资产",
+          "enum": [
+            "character",
+            "scene",
+            "prop",
+            "product"
+          ],
+          "type": "string"
+        },
+        "episode_id": {
+          "default": null,
+          "description": "集 ID；给出时只覆盖这一集正式脚本引用的资产（含商品与衍生，衍生连带其本体），与 Web 集层的批量生成同一范围。不能与 type / names 同时使用",
+          "ge": 1,
+          "type": "integer"
+        }
+      },
+      "type": "object",
+      "required": [
+        "project"
+      ]
+    }
+  },
+  {
+    "name": "arcreel_generate_assets",
+    "description": "批量生成角色 / 场景 / 道具 / 商品的资产图（付费生成，图片写入项目）。多个类型的资产纳入同一批次；只补缺图时，已失效但可用的旧图会被复用，不会自动重生。缺少 description 的资产逐个记为 blocked。终态结果的 generation_result 按 requested / succeeded / failed / blocked 逐 ID 给出结局，ID 形如 character/张三，每个失败项带稳定 code 与下一步动作。项目数据升级失败时拒绝执行，返回 project_migration_failed problem。\n\n外部调用不等待生成完成：提交后立即返回批次句柄 generation_batch，按其中的 poll_after_seconds 间隔调用 get_generation_batch 轮询，直到 done=true 再读取终态结果。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "type": {
+          "default": null,
+          "description": "资产类型；省略则按 character→scene→prop→product 顺序覆盖全部类型",
+          "enum": [
+            "character",
+            "scene",
+            "prop",
+            "product"
+          ],
+          "type": "string"
+        },
+        "names": {
+          "default": null,
+          "description": "要生成的资产名称列表，衍生写作 本体/衍生；必须配合 type 使用，与 all、episode_id 互斥。省略则只选缺资产图的资产",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "all": {
+          "default": false,
+          "description": "显式要求扫描所选类型的全部缺图资产；与 names 互斥。省略 names 时本就只选缺图资产",
+          "type": "boolean"
+        },
+        "episode_id": {
+          "default": null,
+          "description": "集 ID；给出时只覆盖这一集正式脚本引用的资产（含商品与衍生，衍生连带其本体），与 Web 集层的批量生成同一范围。不能与 type / names 同时使用",
+          "ge": 1,
+          "type": "integer"
+        }
+      },
+      "type": "object",
+      "required": [
+        "project"
+      ]
+    }
+  },
+  {
+    "name": "arcreel_generate_storyboards",
+    "description": "为说书（narration）或剧情演绎剧本生成分镜图（付费生成，图片写入项目 storyboards/）。只补缺图时，已失效但可用的旧图不会被自动重生。引用了未登记名称或所引用主体尚无资产图的分镜、缺少 image_prompt 的分镜逐个记为 blocked；生成失败的分镜另记录到 storyboards/generation_failures.json。终态结果的 generation_result 按 requested / succeeded / failed / blocked 逐 ID 给出结局，每个失败项带稳定 code 与下一步动作。项目数据升级失败时拒绝执行，返回 project_migration_failed problem。\n\n外部调用不等待生成完成：提交后立即返回批次句柄 generation_batch，按其中的 poll_after_seconds 间隔调用 get_generation_batch 轮询，直到 done=true 再读取终态结果。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "script": {
+          "description": "剧本纯文件名（不含目录），如 episode_1.json",
+          "type": "string"
+        },
+        "segment_ids": {
+          "default": null,
+          "description": "要生成或重生的分镜 ID（segment_id / scene_id）列表；省略则只选缺分镜图的分镜",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array"
+        }
+      },
+      "required": [
+        "project",
+        "script"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "arcreel_edit_images",
+    "description": "对已生成的资产图 / 分镜图做指令式局部编辑：保持原图大体不变，仅按指令修改不满意的部分（如换发色、去掉背景杂物、调整光线氛围），支持同类型批量下发（付费生成，编辑结果写入项目）。与「重新生成」的区别：编辑 = 保底图微调、不改变原 image_prompt，之后重新生成会按原 prompt 重画、作废本次编辑效果；重新生成 = 按原 prompt 整图重画，会推翻已满意的部分。用户只想改局部时用编辑；用户想推翻构图 / 内容重来、或原 image_prompt 本身要改时用重新生成。编辑必然走图生图（i2i）；当前项目图片供应商不支持 i2i 时每个 ID 记为 blocked（image_capability_missing_i2i），不创建任何生成任务。编辑始终是显式选择（每条编辑自带指令），终态结果的 generation_result 按 requested / succeeded / failed / blocked 逐 ID 给出结局。项目数据升级失败时拒绝执行，返回 project_migration_failed problem。\n\n外部调用不等待生成完成：提交后立即返回批次句柄 generation_batch，按其中的 poll_after_seconds 间隔调用 get_generation_batch 轮询，直到 done=true 再读取终态结果。",
+    "inputSchema": {
+      "$defs": {
+        "ImageEdit": {
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "description": "编辑目标 ID：资产名称；storyboard 为分镜的 segment_id / scene_id；character_derivative 为「本体名/衍生名」",
+              "type": "string"
+            },
+            "instruction": {
+              "description": "编辑指令：用自然语言描述要修改的部分",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "instruction"
+          ],
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "resource_type": {
+          "description": "编辑目标类型；一次调用只编辑同一类型",
+          "enum": [
+            "character",
+            "scene",
+            "prop",
+            "product",
+            "storyboard",
+            "character_derivative"
+          ],
+          "type": "string"
+        },
+        "edits": {
+          "description": "批量编辑列表，每项一个 id 与一条 instruction；同一 id 只保留第一条",
+          "items": {
+            "$ref": "#/$defs/ImageEdit"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "script_file": {
+          "default": null,
+          "description": "剧本纯文件名（不含目录），如 episode_1.json；resource_type=storyboard 时必填",
+          "type": "string"
+        }
+      },
+      "required": [
+        "project",
+        "resource_type",
+        "edits"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "arcreel_generate_narration_audio",
+    "description": "为任意生成模式中由 narrator 拥有发声内容的单元显式生成旁白配音（TTS；付费生成，音频写入项目 audio/）。只补缺配音时，已失效但可用的旧配音不会被自动重生。显式点名的单元若发声不属于叙述旁白、未通过发声准入或没有可合成的旁白文本，逐个记为 blocked。终态结果的 generation_result 按 requested / succeeded / failed / blocked 逐 ID 给出结局，每个失败项带稳定 code 与下一步动作。合成文本在 worker 开始时从最新剧本的规范 narrator utterances 读取，不依赖分镜图或视频。项目数据升级失败时拒绝执行，返回 project_migration_failed problem。\n\n外部调用不等待生成完成：提交后立即返回批次句柄 generation_batch，按其中的 poll_after_seconds 间隔调用 get_generation_batch 轮询，直到 done=true 再读取终态结果。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "script": {
+          "description": "剧本纯文件名（不含目录），如 episode_1.json",
+          "type": "string"
+        },
+        "segment_ids": {
+          "default": null,
+          "description": "当前剧本骨架的单元 ID 列表；省略则只选缺旁白配音的 narrator 单元",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array"
+        }
+      },
+      "required": [
+        "project",
+        "script"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "arcreel_generate_videos",
+    "description": "为分镜图生视频或参考生视频项目生成视频片段（付费生成，视频写入项目）。已有可用成片（Manifest 认定 current / stale，或被选中的手动上传版本）默认复用。申请档位取剧本编排时长，与项目的旁白交付方式无关。整批准入：任一目标未通过准入（缺素材、发声冲突、提示词待补、产物状态不可读等），或有目标需要用户确认跨档时长费用时，本次零任务入队、不产生批次，结果带 batch_admission 逐单元明细与 request_projections 请求投影；用户确认档位后把原目标集合一次性重发，不要按档位拆成多次调用。preview=true 只预检：走同一份准入但不入队、不产生批次，返回 video_quote 报价单（逐 unit 的 outcome 为 generate / reuse / blocked，附编排时长、申请档位、tier_changed、estimated_cost 与 problems，另有 estimated_total 与 confirmed_request_durations），报价与正式提交一致；需要用户先确认费用时先预检。价目表算不出价的单元，estimated_cost.amount 为 null 并带 unpriced_reason，单元的 unpriced 为 true；estimated_total 只合计已定价的单元，未定价的单元数在 unpriced_count，一个单元都没有定价时为 null。未定价不是 0 元：如实告知用户这些单元的费用未知，不要把合计当作整批的价。用户确认后正式提交时原样带上报价单的 confirmed_request_durations，就不会再返回档位确认；两次调用之间档位变了，仍会要求重新确认。终态结果的 generation_result 按 requested / succeeded / failed / blocked 逐 ID 给出结局，每个失败项带稳定 code 与下一步动作。项目数据升级失败时拒绝执行，返回 project_migration_failed problem。\n\n外部调用不等待生成完成：提交后立即返回批次句柄 generation_batch，按其中的 poll_after_seconds 间隔调用 get_generation_batch 轮询，直到 done=true 再读取终态结果。",
+    "inputSchema": {
+      "$defs": {
+        "AllTarget": {
+          "additionalProperties": false,
+          "properties": {
+            "scope": {
+              "const": "all",
+              "description": "剧本内全部单元：只补缺视频的单元，已有可用成片一律复用",
+              "type": "string"
+            }
+          },
+          "required": [
+            "scope"
+          ],
+          "type": "object"
+        },
+        "EpisodeTarget": {
+          "additionalProperties": false,
+          "properties": {
+            "scope": {
+              "const": "episode",
+              "description": "整集：只补缺视频的单元，已有可用成片一律复用",
+              "type": "string"
+            },
+            "episode_id": {
+              "description": "集 ID，须与 script 所属那一集的集 ID 一致",
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "scope",
+            "episode_id"
+          ],
+          "type": "object"
+        },
+        "SceneTarget": {
+          "additionalProperties": false,
+          "properties": {
+            "scope": {
+              "const": "scene",
+              "description": "单个单元",
+              "type": "string"
+            },
+            "ids": {
+              "description": "恰好一个目标 ID：分镜图生视频为 segment_id / scene_id，参考生视频为 unit_id",
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 1,
+              "minItems": 1,
+              "type": "array"
+            }
+          },
+          "required": [
+            "scope",
+            "ids"
+          ],
+          "type": "object"
+        },
+        "SelectedTarget": {
+          "additionalProperties": false,
+          "properties": {
+            "scope": {
+              "const": "selected",
+              "description": "点名的一批单元",
+              "type": "string"
+            },
+            "ids": {
+              "description": "目标 ID 列表：分镜图生视频为 segment_id / scene_id，参考生视频为 unit_id",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1,
+              "type": "array"
+            }
+          },
+          "required": [
+            "scope",
+            "ids"
+          ],
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "script": {
+          "description": "剧本纯文件名（不含目录），如 episode_1.json",
+          "type": "string"
+        },
+        "target": {
+          "description": "目标选择器；scope 取 episode / all / scene / selected",
+          "discriminator": {
+            "mapping": {
+              "all": "#/$defs/AllTarget",
+              "episode": "#/$defs/EpisodeTarget",
+              "scene": "#/$defs/SceneTarget",
+              "selected": "#/$defs/SelectedTarget"
+            },
+            "propertyName": "scope"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/EpisodeTarget"
+            },
+            {
+              "$ref": "#/$defs/AllTarget"
+            },
+            {
+              "$ref": "#/$defs/SceneTarget"
+            },
+            {
+              "$ref": "#/$defs/SelectedTarget"
+            }
+          ]
+        },
+        "force": {
+          "default": false,
+          "description": "是否强制重生已有可用成片；默认复用 current / stale 成片，只允许用于 scene / selected",
+          "type": "boolean"
+        },
+        "confirmed_request_duration_seconds": {
+          "default": null,
+          "description": "用户明确接受的本次视频请求秒数档位；仅参考生视频在返回跨档确认后填写。它不冻结正文、引用或供应商，当前投影改到其它档位时必须重新确认。",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "confirmed_request_durations": {
+          "additionalProperties": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "default": null,
+          "description": "按 unit_id 记的档位确认（{\"E1U1\": 8}）；一次请求里多个 unit 档位不同时用它，让原目标集合仍作为一批重发——拆成几次调用会让先入队的那一档先花掉钱。与 confirmed_request_duration_seconds 同时给出时，本字段按 unit 覆盖。预检结果里的同名字段可以原样传入；其中没有点名的 unit 不受影响。",
+          "type": "object"
+        },
+        "preview": {
+          "default": false,
+          "description": "true 时只预检、不入队：按正式提交同一份准入，返回 video_quote 报价单（逐 unit 的去向、编排时长、申请档位、是否变档、预计费用与缺口）。",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "project",
+        "script",
+        "target"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "arcreel_generate_grid",
+    "description": "为已开启宫格装配的 storyboard 项目（generation_mode=storyboard 且 grid_storyboard=true）生成宫格联合图（付费生成；按 segment_break 分组，超出单张格数上限的分组切为多张）。本工具只产出联合图，不写任何分镜图：成功的分镜报告的是它所在宫格的联合图（artifact_path 为 grids/<grid_id>.png），状态为「联合图已就绪、未切分」；终态结果里未切分宫格的 grid_id 同时列在 grid_ids_awaiting_split。批次句柄与批次终态查询不带该字段：已就绪未切分的宫格见 skipped 各项的 artifact_path，本次新出的见成功分镜的 artifact_path。切分落格须先请用户在宫格面板审阅联合图，用户明确同意后再调用 split_grids。list_only=true 只预览规划、不入队，结果放在 generate_grid 键下。不传 scene_ids 时已失效但可用的旧图照常复用，联合图已就绪而未切分的宫格不重生成；同一组分镜的宫格正在生成时沿用在途任务，不重复计费。准入是整批的：任一分镜受阻（引用缺口、提示词待生成、与在途宫格部分重叠等）即整批不建任务，本身健康的分镜带 generation_batch_admission_withheld；已在生成中的宫格照常跑完，其分镜带 generation_active_task_conflict（action=wait_for_task）。终态结果的 generation_result 按 requested / succeeded / failed / blocked 逐分镜 ID 给出结局。项目数据升级失败时拒绝执行，返回 project_migration_failed problem。\n\n外部调用不等待生成完成：提交后立即返回批次句柄 generation_batch，按其中的 poll_after_seconds 间隔调用 get_generation_batch 轮询，直到 done=true 再读取终态结果。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "script": {
+          "description": "剧本纯文件名（不含目录），如 episode_1.json",
+          "type": "string"
+        },
+        "scene_ids": {
+          "default": null,
+          "description": "重生成包含这些分镜的宫格；省略则只为仍缺分镜图的分组出图",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "list_only": {
+          "default": false,
+          "description": "true 时只预览规划（各张宫格的档位、现有记录 grid_id 与状态、本次动作），不入队、不产生费用；预览立即返回，没有批次可轮询",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "project",
+        "script"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "arcreel_split_grids",
+    "description": "把一张或多张宫格的联合图切分落格：写成它覆盖的全部分镜的分镜图，旧分镜图留在版本历史里可回滚。只在用户明确同意时调用：generate_grid 完成后，先请用户在宫格面板审阅联合图（可重新生成、上传替换或回滚），用户确认要切分后，再传入这些 grid_id；不要在生成完成后自行调用。grid_id 取自 generate_grid 结果的 grid_ids_awaiting_split、成功分镜的 artifact_path（grids/<grid_id>.png），或 generate_grid 的 list_only 预览。逐宫格返回结果：已切分的列出写入的分镜，仍在生成、没有联合图或不存在的宫格跳过并说明原因；一张都没切分时返回 problem，params.results 带逐宫格原因。项目数据升级失败时拒绝执行，返回 project_migration_failed problem。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "grid_ids": {
+          "description": "要切分落格的宫格 ID（如 grid_a1b2c3d4e5f6）",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array"
+        }
+      },
+      "required": [
+        "project",
+        "grid_ids"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "arcreel_inspect_images",
+    "description": "看资产图或分镜图：按 ID 取角色、场景、道具、商品、角色衍生的资产图，或分镜的分镜图，以图片内容块附在结果后面。只读，不收费，不触发任何生成。用来判断生成结果能否使用：有没有崩坏，与设定或提示词是否相符，同一角色是否前后一致。一次调用只看同一类型（resource_type）；version 对列表中的每一项都生效，省略时取各项的 current 版本，比较同一项的历史版本时，每个版本各调用一次。默认 current 没有版本记录但登记了当前图时仍可看图，version 为 null、available_versions 为空；不补写版本记录。每次调用最多 20 张图，超出返回 image_limit_exceeded，请分批调用；图片按原比例缩到长边不超过 2000 px 的 JPEG。结果 images 按请求顺序排列，每项带 id、version、available_versions（该项现有的全部版本号）、status，ok 时带 image（附图序号，从 1 起），以及 prompt（生成该版本时登记的提示词，没有登记时省略）。status 为 ok；image_missing 表示该项还没有图或该版本缺文件；image_unreadable 表示图片无法读取或解码，detail 说明原因。ID 不存在返回 resource_not_found，params.ids 列出不存在的 ID；指定版本不存在返回 version_not_found，params.available_versions 列出该项现有版本。项目数据升级失败时拒绝执行，返回 project_migration_failed problem。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "resource_type": {
+          "description": "要看的图片类型；一次调用只看同一类型",
+          "enum": [
+            "character",
+            "scene",
+            "prop",
+            "product",
+            "storyboard",
+            "character_derivative"
+          ],
+          "type": "string"
+        },
+        "ids": {
+          "description": "要看的 ID 列表：资产为资产名称；storyboard 为分镜 ID（segment_id / scene_id，如 E1S05）；character_derivative 为「本体名/衍生名」",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "version": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "版本号，对列表中每一项都取这个版本；省略时取各项的 current 版本"
+        }
+      },
+      "required": [
+        "project",
+        "resource_type",
+        "ids"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "arcreel_select_video_version",
+    "description": "把一个视频单元的 current 视频版本切换到指定版本号（即 Web 上的版本还原，同一服务）。current 是该单元在全项目的唯一答案，单元预览、剪辑与导出都取它，切换后立即生效。不收费、不重新生成，也不需要创作者确认。两种用途：① 首轮审阅后，某单元的另一候选版本更好，改用它；② 重新生成后验收，新版本不如旧版，改回旧版本。unit_id 在分镜图生视频为分镜 ID，在参考生视频为 unit_id。视频单元不存在返回 video_unit_not_found；版本号不存在返回 version_not_found，params.available_versions 列出该单元现有版本；缺完整取证描述的版本（如手动上传）返回 request_invalid。成功返回 current_version 与 file_path。项目数据升级失败时拒绝执行，返回 project_migration_failed problem。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "unit_id": {
+          "description": "视频单元 ID：分镜图生视频为分镜 ID（如 E1S01），参考生视频为 unit_id（如 E1U1）",
+          "minLength": 1,
+          "type": "string"
+        },
+        "version": {
+          "description": "要设为 current 的视频版本号（从 1 起）",
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "project",
+        "unit_id",
+        "version"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "arcreel_inspect_video_units",
+    "description": "看视频单元的画面：为每个视频单元的一个视频版本抽帧、拼成联系表，联系表作为图片内容块附在结果后面。只读，不收费。用来判断素材能否使用、哪里崩坏、候选版本孰优，以及入出点落在哪一帧。每张联系表最多 12 帧，顶部标视频单元 ID 与版本号；每帧下方标视频单元 ID 与该帧的起始时刻，单位为秒，以视频首帧为 0，与 read_timeline 的入出点同一时间轴。一个单元的帧数超过一张的容量时分到多张。version 对列表中的每个单元都生效，省略时取各单元的 current 版本；比较同一单元的候选版本时，每个版本各调用一次。每次调用的帧预算为 96：单元数 × frames 超出时按单元数平分，平分后的每单元预算在结果的 frame_budget_per_unit；单元数超过 96 返回 frame_budget_exceeded，请分批调用。预算之外还有一条抬升规则：镜头数超过每单元预算时，该单元的帧数提到镜头数，所以一次调用的实际总帧数可能超过预算；每单元实际帧数看 units 里的 frame_count，全部单元的实际总帧数看 total_frames，以它们为准。每个视频版本第一次被看时，服务端用随包 ffmpeg 在本地算出三类信号并按版本缓存，之后直接复用：BLACK 是黑屏段，CUT 是镜头切换点，FREEZE 是画面静止不动的卡帧段（黑屏段不重复计入）。单元帧数至多 24：镜头数不超过它时，抽帧保证每个镜头至少一帧，并在信号两侧加密；镜头数超过它时在各镜头之间均匀挑选，部分镜头没有帧。命中信号的帧在时刻下方标 CUT / BLACK / FREEZE。三类信号的含义与用途：BLACK 与 FREEZE 是疑似缺陷，先看画面确认是生成失败、定格，还是创作者有意的黑场与静帧；截去坏段时，区间的 start 是候选出点（去掉片尾坏段），end 是候选入点（去掉片头坏段）。CUT 是结构信息，不是缺陷：镜头内部的切换点是新镜头首帧的起点，切点前一帧是上一镜头的末帧，据此把入出点定到帧级，避免把入出点定在切换中间。信号只作提示，不会自动裁切或废弃素材，最终取舍由你对照画面判断。结果 units 按请求顺序排列，每项带 version、frame_count、available_versions（该单元现有的全部视频版本号，多于一个时其余是候选版本）、status、sheets，以及 ok 时的 signals。status 为 ok；video_missing 表示该单元没有可用视频或该版本缺文件；video_unreadable 表示视频无法解码，detail 说明原因。sheets 每项的 image 是附图序号（从 1 起），times 是各帧时刻，marked_frames 列出命中信号的帧的时刻与标记。signals 含 duration_seconds（视频时长）、black 与 freeze（{start, end} 区间，单位秒，含 start 不含 end）、cuts（切换点时刻）和 shots（镜头数，等于 cuts 数加 1）。model_review 为预留字段，恒为 null。视频单元不存在返回 video_unit_not_found，params.unit_ids 列出不存在的 ID；指定版本不存在返回 version_not_found，params.available_versions 列出该单元现有版本。项目数据升级失败时拒绝执行，返回 project_migration_failed problem。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "unit_ids": {
+          "description": "要看的视频单元 ID 列表：分镜图生视频为分镜 ID（如 E1S01），参考生视频为 unit_id（如 E1U1）",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "version": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "视频版本号，对列表中每个视频单元都取这个版本；省略时取各单元的 current 版本"
+        },
+        "frames": {
+          "default": 8,
+          "description": "每个视频单元的帧数预算，默认 8；镜头数超过预算时，每个镜头至少一帧优先，实际帧数提到镜头数（至多 24）",
+          "maximum": 24,
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "project",
+        "unit_ids"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "arcreel_create_timeline",
+    "description": "新建一条具名剪辑时间线，同一集可以有多条，显示名不能重名（timeline_name_conflict）。from=script：为 episode 集按当前脚本顺序排列每个视频单元，作为剪辑的起点：整段使用、全部硬切，画外音单位原声 0.3、台词与无人声单位 1.0，旁白挂在该单元的第一个片段上；集不存在返回 episode_not_found。from=timeline：复制 timeline 的 revision 修订（省略时为最新修订）到同一集的新时间线，内容原样带过去（顺序、截取、原声音量、定格、转场、旁白落点、BGM），片段 ID 不变，新时间线从修订 1 起；适合大规模重构前留一份退路，或并排做出另一种剪法；源时间线不受影响，revision 不存在返回 revision_not_found。剪辑片段的画面一律取视频单元的 current 视频版本；剪辑时间线不随脚本自动变化，脚本改动后在 issues 里看到差异。结果与 read_timeline 同形。项目数据升级失败时拒绝执行，返回 project_migration_failed problem。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "from": {
+          "description": "新建方式。script：按当前脚本顺序排列每个视频单元，整段使用、全部硬切，需要 episode；timeline：复制一条已有剪辑时间线（需要 timeline，可选 revision），新时间线落在同一集",
+          "enum": [
+            "script",
+            "timeline"
+          ],
+          "type": "string"
+        },
+        "name": {
+          "description": "显示名，同一集内不能重名，写成创作者一眼认得出的剪法，如「完整版」「快节奏版」",
+          "maxLength": 40,
+          "minLength": 1,
+          "type": "string"
+        },
+        "episode": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "集的集 ID（项目详情 episodes[].episode），不是第几集；from=script 时必填"
+        },
+        "timeline": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "被复制的剪辑时间线 ID；from=timeline 时必填。剪辑时间线 ID（如 tl-3f9a0c21），取自 list_timelines 或 create_timeline 的结果"
+        },
+        "revision": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "被复制的修订号，取自 list_revisions；省略时复制最新修订。只在 from=timeline 时可用"
+        }
+      },
+      "required": [
+        "project",
+        "from",
+        "name"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "arcreel_list_timelines",
+    "description": "列出项目里的剪辑时间线：id、集 ID、显示名、最新修订号、剪辑片段数与最近修改时间，按集与创建顺序排列。只读，无副作用。项目数据升级失败时拒绝执行，返回 project_migration_failed problem。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "episode": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "只列这一集；省略时列出全部集"
+        }
+      },
+      "type": "object",
+      "required": [
+        "project"
+      ]
+    }
+  },
+  {
+    "name": "arcreel_read_timeline",
+    "description": "读取一条剪辑时间线最新修订的完整内容，revision 为当前修订号。只读，无副作用；ID 不存在返回 timeline_not_found。时间一律以秒为单位，最多三位小数。clips 按播放顺序排列，每个剪辑片段带 id（如 c3，在这条时间线内稳定，与创作者沟通时用它指代片段）、unit_id、start 与 duration（服务端算好的绝对起点与时长）、source_volume（原声音量 0–1）、trim（入出点与所依据的视频版本 basis_version）、source_duration（current 视频全长，没有可用视频时为 null）、hold（尾部定格延长）、transition_to_next（到下一片段的转场，null 为硬切）、narration（旁白起止，end 为 null 表示还没有旁白配音）和 status：ready 可用；video_missing 时时长暂按编排时长占位；unit_deleted 时渲染跳过、时长计 0。issues 每条带 code、severity（blocking 阻断出片；warning、info 不阻断）、applies_to（all，或 with_narration 只影响带旁白版本）与相关的 clip_ids / unit_id：video_missing 视频单元还没有可用视频；unit_deleted 片段引用的视频单元已从脚本删除；unit_unused 脚本里的视频单元没进这条时间线；trim_ignored 截取所依据的视频版本已不是 current，渲染时暂用完整视频；hold_too_long 单个片段的定格延长超过 2 秒。旁白相关的三种只在 TTS 配音项目里报告：narration_missing 画外音单位还没有旁白配音（blocking，只阻断带旁白版本）；narration_overrun 旁白压到下一段旁白上（params.cause=next_narration，clip_ids 为两个承载片段）或超出时间线末尾（cause=timeline_end）；narration_source_collision 旁白延伸到台词片段（cause=dialogue）或原声音量高于 0.3 的片段（cause=source_volume）上，clip_ids 为承载片段与被覆盖的片段。subtitle_missing_glyphs（warning）视频单元的字幕里有随包字幕字体没有的字符，params.characters 列出这些字符，烧入成片后它们可能无法正常显示。bgm 按起点排列，每个 BGM 片段带 id（如 b2）、bgm_id 与 name（所引用的 BGM）、start、end（截到时间线末尾后的实际结束时间）、source_in / source_out（取用 BGM 的哪一段）、volume、fade_in 与 fade_out（实际生效的淡入淡出）；bgm_missing（blocking）表示 BGM 片段引用的 BGM 已不在项目里，clip_ids 为该 BGM 片段。项目数据升级失败时拒绝执行，返回 project_migration_failed problem。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "timeline": {
+          "description": "剪辑时间线 ID（如 tl-3f9a0c21），取自 list_timelines 或 create_timeline 的结果",
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "project",
+        "timeline"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "arcreel_edit_timeline",
+    "description": "用一批按剪辑片段 ID 定位的操作修改一条剪辑时间线，整批原子提交为一个带改动摘要的新修订。base_revision 取自 read_timeline 的 revision，整批按它解读；操作按顺序执行，后一条看到前一条的结果。任一条非法时整批不生效，返回 operation_invalid，params 带 operation_index（从 0 起）、clip_id、field 与 allowed（合法取值范围）。base_revision 已不是最新修订时：本批涉及的片段在那之后都没被改过，就照常应用到最新修订上，结果的 concurrent_revisions 列出期间的修订；否则返回 revision_conflict，带 latest_revision 与 conflicting_clip_ids，重新读取后再改。操作：insert 新建片段，ID 由服务端分配并在结果里返回，同一视频单元可以插入多次，未给 source_volume 时画外音单位 0.3、台词与无人声单位 1.0；delete；move；set_trim 按 current 视频版本设置入出点，换版本后截取作废、暂用完整视频；set_volume；set_hold；set_reason；set_transition；place_narration。时间一律以秒为单位，最多三位小数，结果里是服务端规整后的值。转场挂在前一片段上，表示到下一片段的转场，不改变总时长：窗口以切点为中心、前后各占一半，一个片段两侧转场的时长之和不能超过它时长的两倍。insert、delete、move 让相邻关系变了的切点一律恢复硬切，包括被移动片段自己的转场；需要时在同一批里随后重新 set_transition。一个视频单元的旁白只挂在它的一个片段上，从该片段起点开始，按配音实测时长播放，可以延伸到后续片段上：插入的片段在该单元还没有承载旁白的片段时承载旁白；删除承载片段时，旁白改挂到该单元剩下的第一个片段上；place_narration 把旁白改挂到画外音单位的指定片段上，同一单元原先的承载片段随之卸下。BGM 轨：insert_bgm 摆放 list_bgm 列出的 BGM，ID（如 b2）由服务端分配；start 是时间线上的绝对起点，source_in / source_out 截取 BGM 的一段（省略时整首），volume 省略时 0.25，fade_in / fade_out 省略时各 1 秒；set_bgm 只改给出的字段；delete_bgm。BGM 片段按绝对时间摆放，主轨的增删移动不会挪动它。同一时刻只能有一首：本批改动的 BGM 片段与其他 BGM 片段重叠或起点不在时间线内时返回 operation_invalid。超出时间线末尾的部分渲染时截断并在截断处淡出 1 秒；淡入淡出之和超过片段时长时按比例缩短。BGM 的响度已在上传时统一，volume 是在此之上的倍数，两端渲染一致。结果只含新 revision、一行确认 message、受影响片段的新状态 clips（字段同 read_timeline）与 bgm、deleted_clip_ids（含 BGM 片段）、总时长 duration 与更新后的 issues，不返回整份时间线。项目数据升级失败时拒绝执行，返回 project_migration_failed problem。",
+    "inputSchema": {
+      "$defs": {
+        "DeleteBgm": {
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "delete_bgm",
+              "type": "string"
+            },
+            "clip": {
+              "description": "BGM 片段 ID，如 b2",
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "op",
+            "clip"
+          ],
+          "type": "object"
+        },
+        "DeleteClip": {
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "delete",
+              "type": "string"
+            },
+            "clip": {
+              "description": "剪辑片段 ID，如 c3",
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "op",
+            "clip"
+          ],
+          "type": "object"
+        },
+        "InsertBgm": {
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "insert_bgm",
+              "type": "string"
+            },
+            "bgm_id": {
+              "description": "BGM ID（如 bgm-3f9a0c21），取自 list_bgm",
+              "minLength": 1,
+              "type": "string"
+            },
+            "start": {
+              "description": "在剪辑时间线上的绝对起点，秒，须在时间线内",
+              "type": "number"
+            },
+            "source_in": {
+              "default": 0.0,
+              "description": "从 BGM 的第几秒开始用，秒；省略时从头开始",
+              "type": "number"
+            },
+            "source_out": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "用到 BGM 的第几秒，须大于 source_in 且不超过 BGM 时长；省略时用到结尾"
+            },
+            "volume": {
+              "default": 0.25,
+              "description": "音量 0–1，乘在已统一到 −16 LUFS 的响度上；省略时 0.25",
+              "type": "number"
+            },
+            "fade_in": {
+              "default": 1.0,
+              "description": "淡入，秒；省略时 1",
+              "type": "number"
+            },
+            "fade_out": {
+              "default": 1.0,
+              "description": "淡出，秒；省略时 1",
+              "type": "number"
+            }
+          },
+          "required": [
+            "op",
+            "bgm_id",
+            "start"
+          ],
+          "type": "object"
+        },
+        "InsertClip": {
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "insert",
+              "type": "string"
+            },
+            "unit_id": {
+              "description": "视频单元 ID；同一视频单元可以插入多次",
+              "minLength": 1,
+              "type": "string"
+            },
+            "after": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "放到这个剪辑片段之后；null 表示放到最前面"
+            },
+            "source_volume": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "原声音量 0–1；省略时画外音单位 0.3，台词与无人声单位 1.0"
+            },
+            "trim": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/TrimSpec"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "截取；省略时整段使用"
+            },
+            "hold": {
+              "default": 0.0,
+              "description": "尾部定格延长，秒，0–10",
+              "type": "number"
+            },
+            "reason": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "剪辑理由，渲染时忽略"
+            },
+            "transition_to_next": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/TransitionSpec"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "到下一片段的转场；省略为硬切"
+            }
+          },
+          "required": [
+            "op",
+            "unit_id",
+            "after"
+          ],
+          "type": "object"
+        },
+        "MoveClip": {
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "move",
+              "type": "string"
+            },
+            "clip": {
+              "description": "剪辑片段 ID，如 c3",
+              "minLength": 1,
+              "type": "string"
+            },
+            "after": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "放到这个剪辑片段之后；null 表示放到最前面"
+            }
+          },
+          "required": [
+            "op",
+            "clip",
+            "after"
+          ],
+          "type": "object"
+        },
+        "PlaceNarration": {
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "place_narration",
+              "type": "string"
+            },
+            "clip": {
+              "description": "承载旁白的剪辑片段 ID；须是画外音单位的片段，同一视频单元原先承载旁白的片段随之卸下",
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "op",
+            "clip"
+          ],
+          "type": "object"
+        },
+        "SetBgm": {
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "set_bgm",
+              "type": "string"
+            },
+            "clip": {
+              "description": "BGM 片段 ID，如 b2",
+              "minLength": 1,
+              "type": "string"
+            },
+            "start": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "新的绝对起点，秒；省略不改"
+            },
+            "source_in": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "新的入点，秒；省略不改"
+            },
+            "source_out": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "新的出点，秒；省略不改"
+            },
+            "volume": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "新的音量 0–1；省略不改"
+            },
+            "fade_in": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "新的淡入，秒；省略不改"
+            },
+            "fade_out": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "新的淡出，秒；省略不改"
+            }
+          },
+          "required": [
+            "op",
+            "clip"
+          ],
+          "type": "object"
+        },
+        "SetHold": {
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "set_hold",
+              "type": "string"
+            },
+            "clip": {
+              "description": "剪辑片段 ID，如 c3",
+              "minLength": 1,
+              "type": "string"
+            },
+            "hold": {
+              "description": "尾部定格延长，秒，0–10；0 表示不延长",
+              "type": "number"
+            }
+          },
+          "required": [
+            "op",
+            "clip",
+            "hold"
+          ],
+          "type": "object"
+        },
+        "SetReason": {
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "set_reason",
+              "type": "string"
+            },
+            "clip": {
+              "description": "剪辑片段 ID，如 c3",
+              "minLength": 1,
+              "type": "string"
+            },
+            "reason": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "剪辑理由；null 表示清除"
+            }
+          },
+          "required": [
+            "op",
+            "clip",
+            "reason"
+          ],
+          "type": "object"
+        },
+        "SetTransition": {
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "set_transition",
+              "type": "string"
+            },
+            "clip": {
+              "description": "剪辑片段 ID，如 c3",
+              "minLength": 1,
+              "type": "string"
+            },
+            "transition": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/TransitionSpec"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "到下一片段的转场；null 表示恢复硬切"
+            }
+          },
+          "required": [
+            "op",
+            "clip",
+            "transition"
+          ],
+          "type": "object"
+        },
+        "SetTrim": {
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "set_trim",
+              "type": "string"
+            },
+            "clip": {
+              "description": "剪辑片段 ID，如 c3",
+              "minLength": 1,
+              "type": "string"
+            },
+            "trim": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/TrimSpec"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "新的入出点；null 表示取消截取、整段使用"
+            }
+          },
+          "required": [
+            "op",
+            "clip",
+            "trim"
+          ],
+          "type": "object"
+        },
+        "SetVolume": {
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "set_volume",
+              "type": "string"
+            },
+            "clip": {
+              "description": "剪辑片段 ID，如 c3",
+              "minLength": 1,
+              "type": "string"
+            },
+            "volume": {
+              "description": "原声音量，线性倍数 0–1，不支持放大",
+              "type": "number"
+            }
+          },
+          "required": [
+            "op",
+            "clip",
+            "volume"
+          ],
+          "type": "object"
+        },
+        "TimelineOperation": {
+          "discriminator": {
+            "mapping": {
+              "delete": "#/$defs/DeleteClip",
+              "delete_bgm": "#/$defs/DeleteBgm",
+              "insert": "#/$defs/InsertClip",
+              "insert_bgm": "#/$defs/InsertBgm",
+              "move": "#/$defs/MoveClip",
+              "place_narration": "#/$defs/PlaceNarration",
+              "set_bgm": "#/$defs/SetBgm",
+              "set_hold": "#/$defs/SetHold",
+              "set_reason": "#/$defs/SetReason",
+              "set_transition": "#/$defs/SetTransition",
+              "set_trim": "#/$defs/SetTrim",
+              "set_volume": "#/$defs/SetVolume"
+            },
+            "propertyName": "op"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/InsertClip"
+            },
+            {
+              "$ref": "#/$defs/DeleteClip"
+            },
+            {
+              "$ref": "#/$defs/MoveClip"
+            },
+            {
+              "$ref": "#/$defs/SetTrim"
+            },
+            {
+              "$ref": "#/$defs/SetVolume"
+            },
+            {
+              "$ref": "#/$defs/SetHold"
+            },
+            {
+              "$ref": "#/$defs/SetReason"
+            },
+            {
+              "$ref": "#/$defs/SetTransition"
+            },
+            {
+              "$ref": "#/$defs/PlaceNarration"
+            },
+            {
+              "$ref": "#/$defs/InsertBgm"
+            },
+            {
+              "$ref": "#/$defs/SetBgm"
+            },
+            {
+              "$ref": "#/$defs/DeleteBgm"
+            }
+          ]
+        },
+        "TransitionSpec": {
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "$ref": "#/$defs/TransitionType",
+              "description": "转场类型"
+            },
+            "duration": {
+              "description": "转场时长，秒，0.1–2",
+              "type": "number"
+            }
+          },
+          "required": [
+            "type",
+            "duration"
+          ],
+          "type": "object"
+        },
+        "TransitionType": {
+          "description": "ArcReel 转场词表：每一项同时对应一个剪映非 VIP 预设与一个 ffmpeg ``xfade`` 等效效果。\n\n硬切不在词表里，剪辑片段没有转场即为硬切。",
+          "enum": [
+            "dissolve",
+            "fade_black",
+            "fade_white",
+            "push_left",
+            "push_right",
+            "push_up",
+            "push_down",
+            "wipe_left",
+            "wipe_right",
+            "wipe_up",
+            "wipe_down",
+            "circle",
+            "curtain_horizontal",
+            "curtain_vertical",
+            "mosaic",
+            "blur",
+            "radial",
+            "gradient_wipe",
+            "squeeze"
+          ],
+          "title": "TransitionType",
+          "type": "string"
+        },
+        "TrimSpec": {
+          "additionalProperties": false,
+          "properties": {
+            "source_in": {
+              "description": "入点，秒，从该视频单元 current 视频的开头算起",
+              "type": "number"
+            },
+            "source_out": {
+              "description": "出点，秒，须大于入点且不超过视频时长",
+              "type": "number"
+            }
+          },
+          "required": [
+            "source_in",
+            "source_out"
+          ],
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "timeline": {
+          "description": "剪辑时间线 ID（如 tl-3f9a0c21），取自 list_timelines 或 create_timeline 的结果",
+          "minLength": 1,
+          "type": "string"
+        },
+        "base_revision": {
+          "description": "这批操作所依据的修订号，取自 read_timeline 的 revision",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "summary": {
+          "description": "改动摘要，一句话写给创作者看，如「压低开场原声，把推门镜头提前」",
+          "maxLength": 200,
+          "minLength": 1,
+          "type": "string"
+        },
+        "operations": {
+          "description": "按顺序执行的操作，整批原子提交",
+          "items": {
+            "$ref": "#/$defs/TimelineOperation"
+          },
+          "minItems": 1,
+          "type": "array"
+        }
+      },
+      "required": [
+        "project",
+        "timeline",
+        "base_revision",
+        "summary",
+        "operations"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "arcreel_rename_timeline",
+    "description": "修改一条剪辑时间线的显示名，同一集内不能重名（timeline_name_conflict）。只改名字：剪辑内容、修订历史与时间线 ID 都不变，不产生新修订，已渲染的成片与剪映草稿也不因此过期。项目数据升级失败时拒绝执行，返回 project_migration_failed problem。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "timeline": {
+          "description": "剪辑时间线 ID（如 tl-3f9a0c21），取自 list_timelines 或 create_timeline 的结果",
+          "minLength": 1,
+          "type": "string"
+        },
+        "name": {
+          "description": "新的显示名，同一集内不能重名",
+          "maxLength": 40,
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "project",
+        "timeline",
+        "name"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "arcreel_list_revisions",
+    "description": "列出一条剪辑时间线的修订历史，按修订号从旧到新：number、parent、author（creator 创作者、arcreel_agent、external_agent）、summary（改动摘要）、created_at、clip_count、changed_clip_ids（该修订改动过的剪辑片段，没有记录时为 null）与 restored_from（回滚产生的修订，值为它还原到的修订号）。只读，无副作用；ID 不存在返回 timeline_not_found。要复制或回滚到某个修订时，先在这里确认修订号。项目数据升级失败时拒绝执行，返回 project_migration_failed problem。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "timeline": {
+          "description": "剪辑时间线 ID（如 tl-3f9a0c21），取自 list_timelines 或 create_timeline 的结果",
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "project",
+        "timeline"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "arcreel_restore_revision",
+    "description": "把一条剪辑时间线回滚到某个旧修订：以那个修订的内容追加一个新修订（restored_from 记录来源），历史不改写，回滚前的最新修订仍可再回滚回去。回滚总是作用在最新修订上，会整段替换当前内容，所以回滚前先用 list_revisions 与 read_timeline 确认目标修订和当前内容。目标修订的内容与最新修订相同时返回 revision_unchanged，修订不存在返回 revision_not_found。之后基于回滚前修订的 edit_timeline 会按被回滚改动的片段判定冲突。结果与 edit_timeline 同形：新 revision、message、受影响片段 clips（回滚后的状态）、deleted_clip_ids（回滚后不再存在的片段）、duration 与 issues。项目数据升级失败时拒绝执行，返回 project_migration_failed problem。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "timeline": {
+          "description": "剪辑时间线 ID（如 tl-3f9a0c21），取自 list_timelines 或 create_timeline 的结果",
+          "minLength": 1,
+          "type": "string"
+        },
+        "revision": {
+          "description": "要回滚到的修订号，取自 list_revisions",
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "project",
+        "timeline",
+        "revision"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "arcreel_list_bgm",
+    "description": "列出项目里已上传的 BGM：id（如 bgm-3f9a0c21，edit_timeline 的 insert_bgm 用它引用）、name 与 duration（秒），按上传先后排列。BGM 属于整个项目，各集的剪辑时间线都能用；上传由创作者在剪辑视图的 BGM 轨完成，列表为空时请创作者先上传。只读，无副作用。项目数据升级失败时拒绝执行，返回 project_migration_failed problem。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        }
+      },
+      "type": "object",
+      "required": [
+        "project"
+      ]
+    }
+  },
+  {
+    "name": "arcreel_render_final_cut",
+    "description": "把一条剪辑时间线渲染成成片：在本机用随包 ffmpeg 渲染，不付费，登记为产物并给出下载链接。只在创作者要求出片时调用。旁白版本（narration）与是否烧入字幕（burn_subtitles）决定成片的版本，各版本并存；带旁白版本把旁白配音混进整集音频，旁白越界照实渲染：重叠处同时响起，超出末尾的部分随成片截止。BGM 轨按片段混进整集音频，音量是上传时统一的响度乘以片段 volume，带淡入淡出。提交前按所选修订与版本检查，下列情况直接拒绝、不入队：有适用于该版本的 blocking 级 issue（如 video_missing，带旁白版本还有 narration_missing）返回 final_cut_blocked，params.issues 列出这些 issue；非 TTS 配音项目请求 with_narration 返回 final_cut_narration_unavailable；随包 ffmpeg 不可用返回 final_cut_ffmpeg_unavailable。渲染任务读到的视频或旁白配音版本文件已损坏时，任务失败为 final_cut_video_version_corrupted 或 final_cut_narration_version_corrupted，params 带 unit_id 与 version。省略 revision 时渲染提交时的最新修订：渲染期间剪辑时间线又被改动，或显式渲染旧修订，成片一出来就是 stale，仍可下载。每条剪辑时间线的每个版本只保留最新一份成片，再次渲染会覆盖它并把 version 加一。终态结果的 final_cut 带 revision、narration、subtitles、version、artifact_path、acceptance（expected_duration 为剪辑时间线时长，video_duration、audio_duration 为实测音视频流时长，单位秒）与 warnings（warning 级 issues），download_url 是下载链接。项目数据升级失败时拒绝执行，返回 project_migration_failed problem。\n\n外部调用不等待生成完成：提交后立即返回批次句柄 generation_batch，按其中的 poll_after_seconds 间隔调用 get_generation_batch 轮询，直到 done=true 再读取终态结果。",
+    "inputSchema": {
+      "$defs": {
+        "DraftNarration": {
+          "enum": [
+            "without_narration",
+            "with_narration"
+          ],
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "timeline": {
+          "description": "剪辑时间线 ID（如 tl-3f9a0c21），取自 list_timelines 的结果",
+          "minLength": 1,
+          "type": "string"
+        },
+        "revision": {
+          "default": null,
+          "description": "渲染哪个修订；省略时取提交时的最新修订",
+          "ge": 1,
+          "type": "integer"
+        },
+        "narration": {
+          "$ref": "#/$defs/DraftNarration",
+          "default": null,
+          "description": "旁白版本：without_narration 不混入旁白配音；with_narration 混入旁白配音，只对 TTS 配音项目开放。省略时 TTS 配音项目取 with_narration，其余取 without_narration"
+        },
+        "burn_subtitles": {
+          "default": true,
+          "description": "是否把字幕烧进画面；false 得到不带字幕的干净画面",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "project",
+        "timeline"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "arcreel_export_jianying_draft",
+    "description": "把一条剪辑时间线导出成剪映草稿：在本机生成，不付费，登记为产物，创作者在 Web 端填写本机剪映草稿目录后下载。只在创作者要求导出剪映草稿时调用。草稿有一条视频轨和字幕轨，带旁白版本另有旁白轨；旁白或字幕互相重叠时多开一条轨，每条轨内不重叠，新增的字幕轨整体上移。截取、原声音量、定格延长与转场都按剪辑时间线写入；有 BGM 时另有一条 BGM 轨，音量（上传时统一的响度乘以片段 volume）与淡入淡出写进片段。提交前检查所选修订与旁白版本，下列情况直接拒绝、不入队：有适用于该版本的 blocking 级 issue（如 video_missing）返回 jianying_draft_blocked，params.issues 列出这些 issue；没有可导出的剪辑片段返回 jianying_draft_empty；非 TTS 配音项目请求 with_narration 返回 jianying_draft_narration_unavailable。省略 revision 时导出提交时的最新修订：导出期间剪辑时间线又被改动，或显式导出旧修订，草稿一出来就是 stale，仍可下载。每条剪辑时间线的每个旁白版本只保留最新一份草稿，再次导出会覆盖它并把 version 加一。终态结果的 jianying_draft 带 revision、narration、version、artifact_path、duration（剪辑时间线时长，单位秒）与 warnings（warning 级 issues）。项目数据升级失败时拒绝执行，返回 project_migration_failed problem。\n\n外部调用不等待生成完成：提交后立即返回批次句柄 generation_batch，按其中的 poll_after_seconds 间隔调用 get_generation_batch 轮询，直到 done=true 再读取终态结果。",
+    "inputSchema": {
+      "$defs": {
+        "DraftNarration": {
+          "enum": [
+            "without_narration",
+            "with_narration"
+          ],
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "timeline": {
+          "description": "剪辑时间线 ID（如 tl-3f9a0c21），取自 list_timelines 的结果",
+          "minLength": 1,
+          "type": "string"
+        },
+        "revision": {
+          "default": null,
+          "description": "导出哪个修订；省略时取提交时的最新修订",
+          "ge": 1,
+          "type": "integer"
+        },
+        "narration": {
+          "$ref": "#/$defs/DraftNarration",
+          "default": null,
+          "description": "旁白版本：without_narration 不带旁白轨；with_narration 带旁白轨，只对 TTS 配音项目开放。省略时 TTS 配音项目取 with_narration，其余取 without_narration"
+        }
+      },
+      "required": [
+        "project",
+        "timeline"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "arcreel_generate_episode_script",
+    "description": "提示词编写：为正式脚本中待编写的分镜 / 视频单元补出视觉层，输入是正式脚本自身的内容，不读脚本规划。默认补缺：范围是全部待编写条目或 entry_ids 点名的条目，图片提示词与视频提示词各自整份判断，已有的保留、只补缺失的那一份；参考生视频按待编写标记展开单元正文。rewrite=true 显式重写范围内条目的全部视觉层；会覆盖已有内容时返回 prompt_overwrite_required，回执正文即服务端生成的丢失清单，params.prompt_overwrite.revision 是认可令牌；先向用户转述清单，得到同意后才以该 revision 作为 overwrite_revision 重新调用。内容字段、备注、尾帧与已生成产物原样保留。广告/短片尚无正式脚本时整份生成，结果直接成为正式脚本；引用里的新角色 / 场景 / 道具按 new_assets 的处理决定随之登记为待生成资产，回执列出这些新资产。regenerate=true 整份重做已有的正式脚本：先返回 script_overwrite_required 与丢失清单，params.script_overwrite.revision 是认可令牌，确认流程同上。整份生成的产出违约时任务失败（ad_script_rejected），正式脚本、资产与草稿都不变，可带针对性的附加指令重试。dry_run=true 时直接返回 prompt，不提交生成任务。输出被文本模型的最大输出长度截断时返回 text_output_truncated problem，params.model 指名模型：params.custom_model 为 true 时请用户在设置里为它登记最大输出长度，否则请用户换一个文本模型；原样重试会再次截断。项目数据升级失败时拒绝执行，返回 project_migration_failed problem。\n\n外部调用不等待生成完成：提交后立即返回批次句柄 generation_batch，按其中的 poll_after_seconds 间隔调用 get_generation_batch 轮询，直到 done=true 再读取终态结果。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "episode_id": {
+          "description": "集 ID：一集的内部标识，取自项目详情 episodes[].episode 或制作计划的 episode_id，不是播出顺序中的第几集",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "instructions": {
+          "default": null,
+          "description": "用户对本次生成的附加指令原文（可选）；原样注入 prompt 末尾的「附加指令」分节，遵循强度由正文表达，缺省/空白视同未传，最长 4000 字符",
+          "maxLength": 4000,
+          "type": "string"
+        },
+        "entry_ids": {
+          "default": null,
+          "description": "本次编写的范围（分镜 / 单元 id）；省略时为全部待编写条目。点名只划定范围，不授权覆盖已有内容",
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "rewrite": {
+          "default": false,
+          "description": "显式重写范围内条目的全部视觉层；省略时补缺，已有的图片 / 视频提示词保留、只补缺失的那一份",
+          "type": "boolean"
+        },
+        "regenerate": {
+          "default": false,
+          "description": "仅广告/短片：整份重新生成脚本，替换已有的正式脚本，结果直接成为正式脚本；不与 entry_ids / rewrite 同用。已有正式脚本时先返回 script_overwrite 丢失清单",
+          "type": "boolean"
+        },
+        "overwrite_revision": {
+          "default": null,
+          "description": "用户听完丢失清单并同意覆盖后，才传入的令牌：提示词重写取 prompt_overwrite.revision，整份重做取 script_overwrite.revision；带 sha256-v1: 前缀与裸 hex 两种写法等价；不覆盖已有内容时不必给",
+          "type": "string"
+        },
+        "dry_run": {
+          "default": false,
+          "description": "仅返回 prompt，不调用模型",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "project",
+        "episode_id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "arcreel_generate_script_plan",
+    "description": "按项目创作类型生成结构化 script_plan：剧情分镜、旁白分镜或参考生视频单元，同时在 new_assets 里带出本集未登记的资产与各自的处理决定。广告/短片项目无 script_plan。dry_run=true 时直接返回 prompt，不提交生成任务。输出被文本模型的最大输出长度截断时返回 text_output_truncated problem，params.model 指名模型：params.custom_model 为 true 时请用户在设置里为它登记最大输出长度，否则请用户换一个文本模型；原样重试会再次截断。项目数据升级失败时拒绝执行，返回 project_migration_failed problem。\n\n外部调用不等待生成完成：提交后立即返回批次句柄 generation_batch，按其中的 poll_after_seconds 间隔调用 get_generation_batch 轮询，直到 done=true 再读取终态结果。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "episode_id": {
+          "description": "集 ID：一集的内部标识，取自项目详情 episodes[].episode 或制作计划的 episode_id，不是播出顺序中的第几集",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "source": {
+          "default": null,
+          "description": "可选的项目内源文件相对路径；缺省读取本集派生源文 source/episode_N.txt",
+          "type": "string"
+        },
+        "instructions": {
+          "default": null,
+          "description": "用户对本次生成的附加指令原文（可选）；原样注入 prompt 末尾的「附加指令」分节，遵循强度由正文表达，缺省/空白视同未传，最长 4000 字符",
+          "maxLength": 4000,
+          "type": "string"
+        },
+        "dry_run": {
+          "default": false,
+          "description": "仅返回 prompt，不调用模型",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "project",
+        "episode_id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "arcreel_confirm_script_review",
+    "description": "确认本集 script_plan：整份转为正式脚本（全部分镜待编写），按 new_assets 的处理决定登记本集新增资产，放行 prompt_authoring 视觉生成。仅在用户已明确认可进入视觉生成时调用。该集已有正式脚本时确认会整份覆盖它，未认可时返回 script_overwrite_required，回执正文即服务端生成的丢失清单（与 Web 确认框同一份文本），params.script_overwrite.revision 是认可令牌；先向用户转述清单，得到同意后才以该 revision 作为 overwrite_revision 重新确认。项目数据升级失败时拒绝执行，返回 project_migration_failed problem。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "episode_id": {
+          "description": "集 ID：一集的内部标识，取自项目详情 episodes[].episode 或制作计划的 episode_id，不是播出顺序中的第几集",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "overwrite_revision": {
+          "default": null,
+          "description": "用户听完丢失清单并同意覆盖后，才传入的令牌，取自 script_overwrite.revision；带 sha256-v1: 前缀与裸 hex 两种写法等价；尚无正式脚本时不必给",
+          "type": "string"
+        }
+      },
+      "required": [
+        "project",
+        "episode_id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "arcreel_open_draft",
+    "description": "读取指定草稿；草稿不存在时从对应正式文档创建编辑副本。返回完整正文、上一轮产出或晋升判定的违约、canonical revision，以及正式文档的 formal_revision（与 get_script_plan_content、制作计划给出的 revision 同一写法）。项目数据升级失败时拒绝执行，返回 project_migration_failed problem。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "episode_id": {
+          "description": "集 ID：一集的内部标识，取自项目详情 episodes[].episode 或制作计划的 episode_id，不是播出顺序中的第几集",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "doc_type": {
+          "description": "草稿对应的文档：drama_script_plan / narration_script_plan / reference_script_plan 为各创作类型的 script_plan，reference_prompt_authoring 为参考生视频正式脚本的提示词编写稿",
+          "enum": [
+            "drama_script_plan",
+            "narration_script_plan",
+            "reference_script_plan",
+            "reference_prompt_authoring"
+          ],
+          "type": "string"
+        },
+        "source": {
+          "default": null,
+          "description": "可选小说源文件路径；仅在首次从正式 script_plan 创建草稿时用作重判来源，缺省为本集派生源文 source/episode_N.txt",
+          "type": "string"
+        }
+      },
+      "required": [
+        "project",
+        "episode_id",
+        "doc_type"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "arcreel_patch_draft",
+    "description": "按 canonical revision 原子替换草稿正文；revision 冲突时拒绝且不写入。给出 accept_formal_revision 即接受正式文档的并发修改，给出 source 即更新重判范围，二者显式传 null 同样生效。回执带新正文与 revision，不含违约：本工具不重判，修改后的违约以 promote_draft 的全量重判为准。项目数据升级失败时拒绝执行，返回 project_migration_failed problem。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "episode_id": {
+          "description": "集 ID：一集的内部标识，取自项目详情 episodes[].episode 或制作计划的 episode_id，不是播出顺序中的第几集",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "doc_type": {
+          "description": "草稿对应的文档：drama_script_plan / narration_script_plan / reference_script_plan 为各创作类型的 script_plan，reference_prompt_authoring 为参考生视频正式脚本的提示词编写稿",
+          "enum": [
+            "drama_script_plan",
+            "narration_script_plan",
+            "reference_script_plan",
+            "reference_prompt_authoring"
+          ],
+          "type": "string"
+        },
+        "content": {
+          "additionalProperties": true,
+          "description": "替换后的完整草稿正文；允许中间态不通过业务校验",
+          "type": "object"
+        },
+        "base_revision": {
+          "description": "open_draft / 上次 patch_draft 返回的 revision；带 sha256-v1: 前缀与裸 hex 两种写法等价",
+          "type": "string"
+        },
+        "accept_formal_revision": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "合并正式文档并发修改后，显式接受 open_draft 返回的 formal_revision（带 sha256-v1: 前缀与裸 hex 两种写法等价）；正式文档已不存在时该值为 null，同样显式传 null。省略表示不接受"
+        },
+        "source": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "可选源文范围；仅在修正 script_plan 草稿的重判范围时提供，null 清除范围，省略则保持不变"
+        }
+      },
+      "required": [
+        "project",
+        "episode_id",
+        "doc_type",
+        "content",
+        "base_revision"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "arcreel_promote_draft",
+    "description": "重新全量校验指定草稿；通过则晋升为正式文件并清除草稿，不通过则刷新违约报告。可反复调用。项目数据升级失败时拒绝执行，返回 project_migration_failed problem。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "episode_id": {
+          "description": "集 ID：一集的内部标识，取自项目详情 episodes[].episode 或制作计划的 episode_id，不是播出顺序中的第几集",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "doc_type": {
+          "description": "草稿对应的文档：drama_script_plan / narration_script_plan / reference_script_plan 为各创作类型的 script_plan，reference_prompt_authoring 为参考生视频正式脚本的提示词编写稿",
+          "enum": [
+            "drama_script_plan",
+            "narration_script_plan",
+            "reference_script_plan",
+            "reference_prompt_authoring"
+          ],
+          "type": "string"
+        },
+        "base_revision": {
+          "description": "open_draft / 上次 patch_draft 返回的 revision；带 sha256-v1: 前缀与裸 hex 两种写法等价",
+          "type": "string"
+        }
+      },
+      "required": [
+        "project",
+        "episode_id",
+        "doc_type",
+        "base_revision"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "arcreel_discard_draft",
+    "description": "按 canonical revision 丢弃指定草稿，草稿移入项目回收站；正式文档保持不变。项目数据升级失败时拒绝执行，返回 project_migration_failed problem。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "episode_id": {
+          "description": "集 ID：一集的内部标识，取自项目详情 episodes[].episode 或制作计划的 episode_id，不是播出顺序中的第几集",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "doc_type": {
+          "description": "草稿对应的文档：drama_script_plan / narration_script_plan / reference_script_plan 为各创作类型的 script_plan，reference_prompt_authoring 为参考生视频正式脚本的提示词编写稿",
+          "enum": [
+            "drama_script_plan",
+            "narration_script_plan",
+            "reference_script_plan",
+            "reference_prompt_authoring"
+          ],
+          "type": "string"
+        },
+        "base_revision": {
+          "description": "open_draft / 上次 patch_draft 返回的 revision；带 sha256-v1: 前缀与裸 hex 两种写法等价",
+          "type": "string"
+        }
+      },
+      "required": [
+        "project",
+        "episode_id",
+        "doc_type",
+        "base_revision"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "arcreel_patch_project",
+    "description": "新增或修改 project.json，三种形态三选一，同时给出多个或都不给会被拒：(1) 资产 upsert（传 table + entries），按资产表 + 名称 upsert，名称不存在则新增、存在则合并改字段；(2) 顶层 settings 写入（传 settings），白名单字段 ['episode_target_units', 'episode_target_duration', 'source_language', 'brief', 'narration_voice', 'narration_speed', 'character_voice_binding']，值为 null 时清除；(3) 项目概述编辑（传 overview），白名单字段 ['synopsis', 'genre', 'theme', 'world_setting']，只改传入字段、概述不存在时创建。写入后结构非法时不落盘并返回 problem。资产改名不要用本工具（会变成「新名新建 + 旧名残留」），改用 rename_asset。项目数据升级失败时仍可调用，用于修复。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "table": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "（资产 upsert 分支，与 entries 同时给出）资产表，取值 ['characters', 'scenes', 'props', 'products'] 之一",
+          "enum": [
+            "characters",
+            "scenes",
+            "props",
+            "products",
+            null
+          ]
+        },
+        "entries": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "（资产 upsert 分支）{ 名称: { description, voice_style 等字段 } } 映射，至少一条；名称不存在则新增、存在则合并改字段。角色条目可带 derivatives: { 衍生名: { description } }，登记本体之外的另一套外观，按衍生名合并（同名改描述、新名加入、未提及的保留），description 写相对本体的变化"
+        },
+        "settings": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "（settings 写入分支）顶层字段映射，键须在白名单 ['episode_target_units', 'episode_target_duration', 'source_language', 'brief', 'narration_voice', 'narration_speed', 'character_voice_binding'] 内，值为 null 时清除该字段"
+        },
+        "overview": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "（项目概述分支）概述字段映射，键须在白名单 ['synopsis', 'genre', 'theme', 'world_setting'] 内；只更新传入字段，概述不存在时创建"
+        }
+      },
+      "type": "object",
+      "required": [
+        "project"
+      ]
+    }
+  },
+  {
+    "name": "arcreel_patch_episode_meta",
+    "description": "编辑一集剧本的顶层元数据字段（非分镜级），白名单字段 ['title']。分集标题以剧本顶层 title 为唯一真相源，改后自动镜像到 project.json 的分集列表。改分镜内部字段请用 patch_episode_script。项目数据升级失败时仍可调用，用于修复。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "script": {
+          "description": "剧本纯文件名（不含目录），如 episode_1.json",
+          "type": "string"
+        },
+        "field": {
+          "const": "title",
+          "description": "要编辑的剧本顶层字段，白名单 ['title']",
+          "type": "string"
+        },
+        "value": {
+          "description": "新值；title 须为非空字符串，首尾空白会被裁剪",
+          "type": "string"
+        }
+      },
+      "required": [
+        "project",
+        "script",
+        "field",
+        "value"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "arcreel_rename_asset",
+    "description": "级联重命名资产：一次改齐资产表 key、全部剧集剧本与 script_plan 草稿中的名称引用（引用数组 / speaker / @[名称] mention），以及按名命名的关联文件与版本历史。新名与同表既有资产冲突时整体拒绝、不落盘。改名不影响全局资产库。资产改名一律用本工具，不要用 patch_project。项目数据升级失败时仍可调用，用于修复。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "table": {
+          "description": "资产表，取值 ['characters', 'scenes', 'props', 'products'] 之一",
+          "enum": [
+            "characters",
+            "scenes",
+            "props",
+            "products"
+          ],
+          "type": "string"
+        },
+        "old_name": {
+          "description": "现有资产名",
+          "type": "string"
+        },
+        "new_name": {
+          "description": "新资产名；与同表既有资产冲突（按 NFC 归一判定）时整体拒绝",
+          "type": "string"
+        }
+      },
+      "required": [
+        "project",
+        "table",
+        "old_name",
+        "new_name"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "arcreel_merge_asset",
+    "description": "合并同一身份被登记成的两个同表资产（characters / scenes / props）：全部剧集剧本与 script_plan 草稿中指向 source 的引用（引用数组 / speaker / 正文与画面描述里的 @[名称]）一次改指 target。target 原样保留；source 的名字与别名记为 target 的别名，source 名下的衍生迁到 target，与 target 已有衍生同名的并入已有的那个。as_derivative=true（仅 characters）时 source 改为 target 的衍生：画面引用改写为 target/source，speaker 改为 target，source 的名字不记为别名。source 的描述、资产图及版本历史、声音设置、原图与参考音频不并入，移入项目回收站；引用的改写不随恢复撤销：先用 dry_run=true 取得按集列出的影响，转述给用户并得到同意后再执行。资产改名用 rename_asset。项目数据升级失败时仍可调用，用于修复。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "table": {
+          "description": "资产表，取值 ['characters', 'scenes', 'props'] 之一",
+          "enum": [
+            "characters",
+            "scenes",
+            "props"
+          ],
+          "type": "string"
+        },
+        "source": {
+          "description": "被并方：合并后从资产表删除",
+          "type": "string"
+        },
+        "target": {
+          "description": "保留方：同表的另一个资产，原样保留",
+          "type": "string"
+        },
+        "as_derivative": {
+          "default": false,
+          "description": "仅 characters：true 时把 source 并为 target 的衍生，衍生名取 source 的名字，描述取 source 的描述，衍生资产图待生成",
+          "type": "boolean"
+        },
+        "dry_run": {
+          "default": false,
+          "description": "true 时只返回按集列出的影响，不做任何更改",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "project",
+        "table",
+        "source",
+        "target"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "arcreel_retry_project_migration",
+    "description": "重跑本项目的数据升级链（含产物补录）。升级失败时项目被阻断，阻断期仍可用的写入工具只有 patch_project / patch_episode_meta / rename_asset / merge_asset；patch_episode_script 一律被拒。按失败明细用这些工具修好被点名的集 / 文件，再调用本工具；它们改不到的位置（如剧本正文类违约）如实报告卡点给用户，不要反复重试。幂等：已是最新版本时直接返回成功。成功返回新的制作计划 workflow_plan；失败返回 project_migration_failed problem，params.details 中含结构化明细（episode / file / violation）。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        }
+      },
+      "type": "object",
+      "required": [
+        "project"
+      ]
+    }
+  },
+  {
+    "name": "arcreel_patch_episode_script",
+    "description": "按 canonical revision 原子执行有序剧本 operations（update / insert / move / remove / split）。先在内存形成完整 candidate，再统一校验 schema、项目引用、Artifact Manifest 与 SpeechComposition；任一问题整批零写入，结果 success=false，problems 给出稳定 code、operation_index、unit/field location 与 next_action，发声组合问题另附 speech_admission。insert 与 split 的新条目 id 由服务端分配：取本集用过的最大序号之后的号，编号不连续是正常的，已删除条目的编号不会再发出；新 id 见结果的 affected_ids 或重新读取剧本。after_id 省略时插到最前，空脚本的第一条即如此。remove 移除的条目连同它的媒体与版本历史移入项目回收站，可以恢复。move 调整顺序：把 id 移到 after_id 之后，after_id 省略时移到最前；条目连同已生成的媒体一起移动。移动后，前一条分镜变了的分镜图（章节切分点上的除外）转为过期，不列入 regeneration_required_ids，是否重新生成由用户决定。脚本里现有条目的付费媒体不会被删除或清空；改了 image_prompt / video_prompt 的条目列在 regeneration_required_ids，须紧接着显式重新生成；画面描述里未绑定的 @[名称] 列在 warnings。写入对应原文 source_text 时，项目有源文则须是本集源文的逐字片段，否则以 source_text_not_verbatim 拒绝。剧本不存在时返回 script_not_found problem。项目数据升级失败时拒绝执行，返回 project_migration_failed problem。",
+    "inputSchema": {
+      "$defs": {
+        "PatchInsertOperation": {
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "insert",
+              "type": "string"
+            },
+            "after_id": {
+              "anyOf": [
+                {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "新条目插在这个 id 之后；省略或为 null 时插到最前（空脚本的第一条即如此）"
+            },
+            "item": {
+              "additionalProperties": true,
+              "description": "新条目的完整内容；id 由系统分配，取本集用过的最大序号之后的号，已删除条目的编号不会再发出",
+              "type": "object"
+            }
+          },
+          "required": [
+            "op",
+            "item"
+          ],
+          "type": "object"
+        },
+        "PatchMoveOperation": {
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "move",
+              "type": "string"
+            },
+            "id": {
+              "description": "要移动的条目 id；条目内容与已生成的媒体随条目一起移动",
+              "minLength": 1,
+              "type": "string"
+            },
+            "after_id": {
+              "anyOf": [
+                {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "移到这个 id 之后；省略或为 null 时移到最前"
+            }
+          },
+          "required": [
+            "op",
+            "id"
+          ],
+          "type": "object"
+        },
+        "PatchRemoveOperation": {
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "remove",
+              "type": "string"
+            },
+            "id": {
+              "description": "要删除的条目 id",
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "op",
+            "id"
+          ],
+          "type": "object"
+        },
+        "PatchSplitOperation": {
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "split",
+              "type": "string"
+            },
+            "id": {
+              "description": "要拆分的条目 id；第一段沿用该 id，其余段按新增条目的规则分配新 id",
+              "minLength": 1,
+              "type": "string"
+            },
+            "parts": {
+              "description": "拆分后的各段完整内容，按顺序排列，至少两段",
+              "items": {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              "minItems": 2,
+              "type": "array"
+            }
+          },
+          "required": [
+            "op",
+            "id",
+            "parts"
+          ],
+          "type": "object"
+        },
+        "PatchUpdateOperation": {
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "update",
+              "type": "string"
+            },
+            "id": {
+              "description": "要修改的条目 id（segment_id / scene_id / shot_id / unit_id）",
+              "minLength": 1,
+              "type": "string"
+            },
+            "fields": {
+              "additionalProperties": true,
+              "description": "字段路径到新值的映射；嵌套字段用点号路径，如 image_prompt.scene",
+              "minProperties": 1,
+              "type": "object"
+            }
+          },
+          "required": [
+            "op",
+            "id",
+            "fields"
+          ],
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "script": {
+          "description": "剧本纯文件名（不含目录），如 episode_1.json；单集单文件，多集编辑每集一次调用",
+          "minLength": 1,
+          "type": "string"
+        },
+        "base_revision": {
+          "description": "get_episode_script 返回的当前 revision；带 sha256-v1: 前缀与裸 hex 两种写法等价",
+          "pattern": "^(?:sha256-v1:)?[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "operations": {
+          "description": "按顺序执行的编辑操作，整批原子提交：update / insert / move / remove / split",
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "insert": "#/$defs/PatchInsertOperation",
+                "move": "#/$defs/PatchMoveOperation",
+                "remove": "#/$defs/PatchRemoveOperation",
+                "split": "#/$defs/PatchSplitOperation",
+                "update": "#/$defs/PatchUpdateOperation"
+              },
+              "propertyName": "op"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/PatchUpdateOperation"
+              },
+              {
+                "$ref": "#/$defs/PatchInsertOperation"
+              },
+              {
+                "$ref": "#/$defs/PatchMoveOperation"
+              },
+              {
+                "$ref": "#/$defs/PatchRemoveOperation"
+              },
+              {
+                "$ref": "#/$defs/PatchSplitOperation"
+              }
+            ]
+          },
+          "minItems": 1,
+          "type": "array"
+        }
+      },
+      "required": [
+        "project",
+        "script",
+        "base_revision",
+        "operations"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "arcreel_plan_episodes",
+    "description": "分集规划：按项目登记的整本源文文件清单顺序，从最后一个切出集的结尾起读一个源文窗口，调用项目配置的文本模型一次规划出窗口内所有剧情弧完整的集（标题 / 钩子 / 原文范围；drama 另含分集大纲），在同一把项目锁内写账本、派生 source/episode_{集 ID}.txt 并清理残留派生文件。新切出的集排在最后一个切出集之后，自带原文与无原文的集不参与切分、位置不变。source/ 里未登记进文件清单的文件不是整本源文，不会被读取。返回账本摘要（每集标题、集 ID 与播出位置、钩子、体量，以及本集原文的首句与尾句，超长句截断），首尾句供用户核对分集边界。新集按项目历史最高集 ID 递增分配，集 ID 不代表播出顺序，向用户指称一集用标题与播出位置。源文窗口固定 50000 字符，每批最多规划的集数由当前文本模型登记的最大输出长度推导，二者都不可配置。窗口内找不到剧情弧完整的切分点时本批报错，请用户先手工切出这一段再继续规划。输出被文本模型的最大输出长度截断时返回 text_output_truncated problem，params.model 指名模型：params.custom_model 为 true 时请用户在设置里为它登记最大输出长度，否则请用户换一个文本模型；原样重试会再次截断。同一项目同一时间只能有一个分集规划，Web 端「AI 规划分集」进行中时调用会被拒。每集目标体量取 episode_target_units，未设时按 episode_target_duration 经口播语速折算（折算值在返回的核对材料里标明来源）。用户提供分集附加指令（如按章节对齐切分、指定某处收尾）时经 instructions 传入原文，规划 prompt 另附已规划集数、未规划余量、本窗口体量供换算切分节奏。规划按窗口分多批（长篇会多次调用本工具），instructions 不持久化，规划全部完成前每一批调用都要重复带上同一附加指令。末批即全部源文规划完毕、或再次调用已无新内容时，返回会额外附全局体量核对材料（累计集数、体量最小几集、体量中位数、目标体量）：若用户给过总集数、按章节对齐等结构性偏好，须对照核对、有偏差明确告知用户；常规批次只报累计已规划集数。提交时按参与源文件记录内容指纹；若检测到已记录的源文件内容被改动或消失（源文被替换 / 编辑 / 删除，即使账本坐标仍在界内），会拒绝规划并指名变动文件，此时需调用 reset_episode_planning 做全量重置后才能重新规划。Web 端「分集」视图有一份等待处理的「新的分集方案」（重新规划的候选）时也会拒绝，请用户先在「分集」视图里采纳或放弃它。项目数据升级失败时拒绝执行，返回 project_migration_failed problem。\n\n外部调用不等待生成完成：提交后立即返回批次句柄 generation_batch，按其中的 poll_after_seconds 间隔调用 get_generation_batch 轮询，直到 done=true 再读取终态结果。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "instructions": {
+          "default": null,
+          "description": "用户分集附加指令原文（可选，如「按章节对齐切分」）；原样注入规划 prompt 的「附加指令」分节，遵循强度由正文表达，需要强约束时在正文写明。每批调用都要重复带上，缺省 / 空白视同未传，最长 4000 字符",
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "project"
+      ]
+    }
+  },
+  {
+    "name": "arcreel_reset_episode_planning",
+    "description": "重置分集规划：把账本退回未规划状态的逃生口，不调用文本模型，不受供应商配置影响。只动切自整本源文的集，自带原文与无原文的集原样保留。省略 episode_id（或给播出顺序中第一个切出集的集 ID）是全量重置：移除全部切出集，源文被替换或删除重建、账本写坏导致规划报「起点越界」「范围无效」等错误并永久失败时用它恢复，零前置校验、任何损坏状态都能执行成功。给其他切出集的 episode_id 是部分重置：保留播出顺序中该集之前的集，只清除该集及之后的切出集，下一批规划的起点随之退到保留段最后一个切出集的结尾；这条路径有前置校验（全部已记录源文指纹须与当前源文一致，且保留段坐标须在当前源文界内、依次推进不重叠），任一不满足会拒绝执行并指明具体原因，此时改用全量重置。之后 plan_episodes 规划的集分配新的集 ID，被清除的集 ID 不再复用。两种模式都对波及已消费集（已有 script_plan / 剧本 / 媒体产物）时不执行，返回 confirmation_required=true 与受影响清单，须告知用户、确认后带 confirm_consumed=true 重新调用。确认后已消费集转为无原文的集、标 stale（原文已重新规划），移到播出顺序末尾，剧本、媒体等产物与产物登记都归它保留，不会接到新规划的集上；没有产物的切出集移出账本。重置范围内可由账本重造的派生集文件会被删除，无原文范围记录的集文件改名留底（不会丢内容），保留段的派生文件不受影响。项目数据升级失败时拒绝执行，返回 project_migration_failed problem。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "episode_id": {
+          "default": null,
+          "description": "从哪个切出集起重置（集 ID）；省略或给播出顺序中第一个切出集为全量重置，其他切出集为部分重置（保留播出顺序中它之前的集）",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "confirm_consumed": {
+          "default": false,
+          "description": "已向用户说明波及的已消费集并获确认后置 true；首次调用不传，由工具先返回受影响清单",
+          "type": "boolean"
+        }
+      },
+      "type": "object",
+      "required": [
+        "project"
+      ]
+    }
+  },
+  {
+    "name": "arcreel_complete_script_plan_rebuild",
+    "description": "stale 分集的 script_plan 重建成功后调用，原子记录重建完成事实；即使重建内容与旧 script_plan 逐字相同，制作计划也能继续收敛。仅在制作计划 next_action.args 带 expected_stale_script_plan_revision 时使用，该值原样传入。该集不在待重建状态（not_stale）、缺少重建基线（missing_baseline）、基线已变化（baseline_conflict）或正式 script_plan 文件缺失（script_plan_missing）时拒绝且不写入；报冲突时刷新制作计划，不要用旧参数重试。成功返回该集与重建后 script_plan 的 revision。项目数据升级失败时拒绝执行，返回 project_migration_failed problem。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "episode_id": {
+          "description": "集 ID：一集的内部标识，取自项目详情 episodes[].episode 或制作计划的 episode_id，不是播出顺序中的第几集",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "expected_stale_script_plan_revision": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "重建基线，原样取自制作计划 next_action.args.expected_stale_script_plan_revision（可能为 null，null 也须显式传；带 sha256-v1: 前缀与裸 hex 两种写法等价）；与项目记录不一致时拒绝"
+        }
+      },
+      "required": [
+        "project",
+        "episode_id",
+        "expected_stale_script_plan_revision"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "arcreel_delete_project_file",
+    "description": "把项目里的一个未引用文件或一个非当前的历史版本（versions/ 下的快照）移入项目回收站，成为一条删除记录，30 天内可用 restore_trash_record 恢复，历史版本恢复后回到版本历史。这是 Agent 删除项目文件的唯一途径：媒体目录与 versions/ 不能直接写入或删除。删除前在项目锁内按引用关系重新判定，被项目数据、剧本、产物清单或版本历史引用的文件返回 file_view_delete_not_allowed，当前版本返回 version_delete_current，未纳入整本源文的源文件返回 file_view_delete_source_in_episodes，所属资源正在更新时返回 version_delete_in_use，等待更新结束后重试。文件不存在返回 file_not_found。只删创作者明确要删的文件；回收站的清空与彻底删除只能由创作者在文件视图里操作。成功返回 record（含 id、files、deleted_at、size）。项目数据升级失败时拒绝执行，返回 project_migration_failed problem。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "path": {
+          "description": "项目内相对路径（正斜杠），如 storyboards/scene_E1S02.png",
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "project",
+        "path"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "arcreel_list_trash_records",
+    "description": "列出项目回收站里的删除记录，新的在前：每条含 id、object（被删对象的类型与身份）、files（删除前的项目内路径）、deleted_at、origin（user 为创作者发起，agent 为 Agent 发起）与 size；另返回 total_size 与 retention_days。只读，无副作用。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        }
+      },
+      "type": "object",
+      "required": [
+        "project"
+      ]
+    }
+  },
+  {
+    "name": "arcreel_restore_trash_record",
+    "description": "恢复一条删除记录。恢复只新增、不覆盖：原路径空闲则回原路径；原路径已有该资源的当前文件时，被删文件作为它的历史版本加回，当前版本不变；其余被占用的路径换名为「name (n).ext」。记录不存在（可能已被恢复或清除）返回 trash_record_not_found。成功返回 restored：每项含 original（删除前路径）、path（恢复后路径）与 as_history。项目数据升级失败时拒绝执行，返回 project_migration_failed problem。",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string",
+          "description": "目标项目的项目名（list_projects 返回的 name）；每次调用都须显式指定"
+        },
+        "record_id": {
+          "description": "删除记录 ID，取自 list_trash_records 或 delete_project_file 的结果",
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "project",
+        "record_id"
+      ],
+      "type": "object"
+    }
+  }
+]

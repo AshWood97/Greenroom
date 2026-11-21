@@ -1,0 +1,143 @@
+.badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  border-radius: 20px;
+  background: rgba(15, 22, 27, 0.85);
+  color: #10b981;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  user-select: none;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.hasUpdate {
+  gap: 8px;
+  padding: 5px 6px 5px 12px;
+  border-color: #10b981;
+  border-radius: 10px;
+  background: rgba(15, 22, 27, 0.97);
+  color: #d1fae5;
+  white-space: normal;
+}
+
+.notice {
+  display: inline-flex;
+  align-items: center;
+}
+
+.refresh {
+  flex: 0 0 auto;
+  min-height: 26px;
+  padding: 4px 9px;
+  border: 0;
+  border-radius: 6px;
+  background: #10b981;
+  color: #04231a;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s ease;
+}
+
+.refresh:hover {
+  background: #34d399;
+}
+
+.refresh:focus-visible,
+.cancel:focus-visible,
+.confirm:focus-visible {
+  outline: 2px solid #34d399;
+  outline-offset: 2px;
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 4000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.65);
+}
+
+.dialog {
+  width: min(440px, 100%);
+  padding: 20px;
+  border: 1px solid #2b4540;
+  border-radius: 14px;
+  background: #0e181c;
+  color: #dce5e2;
+  box-shadow: 0 20px 70px #0009;
+  text-align: left;
+}
+
+.dialog h2 {
+  margin: 0 0 10px;
+  font-size: 17px;
+}
+
+.dialog p {
+  margin: 0;
+  color: #a3b5af;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.cancel,
+.confirm {
+  padding: 8px 12px;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.cancel {
+  border: 1px solid #334155;
+  background: transparent;
+  color: #dce5e2;
+}
+
+.cancel:hover {
+  border-color: #64748b;
+}
+
+.confirm {
+  border: 1px solid #10b981;
+  background: #10b981;
+  color: #04231a;
+  font-weight: 600;
+}
+
+.confirm:hover {
+  border-color: #34d399;
+  background: #34d399;
+}
+
+@media (max-width: 480px) {
+  .dialog {
+    padding: 16px;
+  }
+
+  .actions {
+    flex-direction: column-reverse;
+  }
+
+  .cancel,
+  .confirm {
+    width: 100%;
+  }
+}

@@ -1,0 +1,865 @@
+[
+  {
+    "name": "toonflow_projects",
+    "description": "列出成员的 Toonflow 工作区",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "toonflow_create_project",
+    "description": "创建成员私有工作区及原生画布",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "toonflow_canvases",
+    "description": "列出工作区内原生 Toonflow 画布",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "project": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "project"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "toonflow_get_canvas",
+    "description": "读取原生画布的节点、连线和任务状态",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "project": {
+          "type": "string",
+          "minLength": 1
+        },
+        "canvas": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "project",
+        "canvas"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "toonflow_create_canvas",
+    "description": "新建原生 Toonflow 画布",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "project": {
+          "type": "string",
+          "minLength": 1
+        },
+        "canvas": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "project",
+        "canvas"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "toonflow_add_node",
+    "description": "新增原生节点，支持 textNode/imageGenerationNode/videoGenerationNode/audioGenerationNode/imageNode/videoNode/director3dNode 等已安装节点",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "project": {
+          "type": "string",
+          "minLength": 1
+        },
+        "canvas": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "position": {
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "x",
+            "y"
+          ]
+        }
+      },
+      "required": [
+        "project",
+        "canvas",
+        "type",
+        "label",
+        "position"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "toonflow_update_node",
+    "description": "修改节点创作数据，如 prompt/promptModel/model/ratio/size/textSnapshot；不写凭据",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "project": {
+          "type": "string",
+          "minLength": 1
+        },
+        "canvas": {
+          "type": "string",
+          "minLength": 1
+        },
+        "node_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "data": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "project",
+        "canvas",
+        "node_id",
+        "data"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "toonflow_move_node",
+    "description": "移动原生画布节点",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "project": {
+          "type": "string",
+          "minLength": 1
+        },
+        "canvas": {
+          "type": "string",
+          "minLength": 1
+        },
+        "node_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "position": {
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "x",
+            "y"
+          ]
+        }
+      },
+      "required": [
+        "project",
+        "canvas",
+        "node_id",
+        "position"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "toonflow_delete_node",
+    "description": "删除节点及其连线",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "project": {
+          "type": "string",
+          "minLength": 1
+        },
+        "canvas": {
+          "type": "string",
+          "minLength": 1
+        },
+        "node_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "project",
+        "canvas",
+        "node_id"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "toonflow_connect",
+    "description": "连接节点的原生输入输出端口",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "project": {
+          "type": "string",
+          "minLength": 1
+        },
+        "canvas": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sourceHandle": {
+          "type": "string",
+          "minLength": 1
+        },
+        "targetHandle": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "project",
+        "canvas",
+        "source",
+        "target",
+        "sourceHandle",
+        "targetHandle"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "toonflow_delete_edge",
+    "description": "删除画布连线",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "project": {
+          "type": "string",
+          "minLength": 1
+        },
+        "canvas": {
+          "type": "string",
+          "minLength": 1
+        },
+        "edge_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "project",
+        "canvas",
+        "edge_id"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "toonflow_generate_node",
+    "description": "后台执行图片、视频或音频生成节点，立即返回任务编号；关闭页面后继续并回填原画布",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "project": {
+          "type": "string",
+          "minLength": 1
+        },
+        "canvas": {
+          "type": "string",
+          "minLength": 1
+        },
+        "node_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "project",
+        "canvas",
+        "node_id"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "toonflow_task",
+    "description": "读取已受理任务和最后查询原因",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "task_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "task_id"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "toonflow_resume",
+    "description": "继续查询已受理的平台任务，恢复结果回填",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "toonflow_models",
+    "description": "读取管理员授权的创作模型",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "toonflow_read_document",
+    "description": "读取项目内的剧本或提示词文件",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "project": {
+          "type": "string",
+          "minLength": 1
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "project",
+        "path"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "toonflow_write_document",
+    "description": "保存项目内的剧本或提示词文件",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "project": {
+          "type": "string",
+          "minLength": 1
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "content": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "project",
+        "path",
+        "content"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "toonflow_archive_media",
+    "description": "将成员工作区产物归档到私有资产库",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "project": {
+          "type": "string",
+          "minLength": 1
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "project",
+        "path"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "toonflow_generate_text",
+    "description": "按成员授权文本模型生成 .txt/.md 文稿；支持有序 STRING、纯文本 FILE、能力已声明的 IMAGE 引用，保留人工稿和未知原任务。VIDEO 与需要解析缓存的非纯文本 FILE 暂不支持。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "project": {
+          "type": "string",
+          "minLength": 1
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "prompt": {
+          "type": "string",
+          "minLength": 1
+        },
+        "model_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "references": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "dataType": {
+                    "const": "STRING"
+                  },
+                  "value": {
+                    "type": "string",
+                    "maxLength": 1000000
+                  }
+                },
+                "required": [
+                  "dataType",
+                  "value"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "dataType": {
+                    "enum": [
+                      "IMAGE",
+                      "FILE"
+                    ]
+                  },
+                  "value": {
+                    "type": "object",
+                    "properties": {
+                      "url": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 4096
+                      },
+                      "mimeType": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 128
+                      }
+                    },
+                    "required": [
+                      "url",
+                      "mimeType"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "dataType",
+                  "value"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
+      },
+      "required": [
+        "project",
+        "path",
+        "prompt"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "toonflow_local_media",
+    "description": "对 frameAnalysisNode 做本地抽帧/分镜/音轨提取、videoNode 做 extractAudio/separate/trim、imageNode 做宫格切分；保留原媒体、新增原生素材节点；立即返回 taskId，同 callId 不重做，不调用模型。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "project": {
+          "type": "string",
+          "minLength": 1
+        },
+        "canvas": {
+          "type": "string",
+          "minLength": 1
+        },
+        "node_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "enum": [
+            "frames",
+            "video",
+            "image-grid"
+          ]
+        },
+        "options": {
+          "type": "object",
+          "properties": {
+            "method": {
+              "enum": [
+                "adaptive",
+                "content"
+              ]
+            },
+            "threshold": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 255
+            },
+            "minSceneSeconds": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 60
+            },
+            "frames": {
+              "type": "boolean"
+            },
+            "clips": {
+              "type": "boolean"
+            },
+            "audio": {
+              "type": "boolean"
+            },
+            "action": {
+              "enum": [
+                "extractAudio",
+                "separate",
+                "trim"
+              ]
+            },
+            "start": {
+              "type": "number",
+              "minimum": 0
+            },
+            "end": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "rows": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10
+            },
+            "columns": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "project",
+        "canvas",
+        "node_id",
+        "kind",
+        "options"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "toonflow_director",
+    "description": "读取/选择已有导演方案、添加原生人偶、恢复旧方案输入指令或设置/重排/删除取景参数；不捕获WebGL画面、不调用AI、不渲染或导出。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "project": {
+          "type": "string",
+          "minLength": 1
+        },
+        "canvas": {
+          "type": "string",
+          "minLength": 1
+        },
+        "node_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "action": {
+          "enum": [
+            "read",
+            "select_plan",
+            "add_mannequin",
+            "restore_instruction",
+            "set_anchors",
+            "reorder_anchors",
+            "remove_anchor"
+          ]
+        },
+        "plan_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "anchors": {
+          "type": "array",
+          "maxItems": 100,
+          "items": {
+            "type": "object"
+          }
+        },
+        "anchor_ids": {
+          "type": "array",
+          "maxItems": 100,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "anchor_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "project",
+        "canvas",
+        "node_id",
+        "action"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "toonflow_generate_text_node",
+    "description": "执行已保存的原生 textNode：按原生 promptModel、连线及 referenceOrder 读取绑定文稿与引用；仅文本、纯文本文件及授权图片，不猜视频能力。完整结果先保留，人工修改冲突不覆盖，未知任务不重投。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "project": {
+          "type": "string",
+          "minLength": 1
+        },
+        "canvas": {
+          "type": "string",
+          "minLength": 1
+        },
+        "node_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "project",
+        "canvas",
+        "node_id"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "toonflow_analyze_scenes",
+    "description": "基于已保存的原生拉片结果，按官方时序图片抽样进行逐镜头分析与文本归纳；必须使用成员授权图片输入文本模型。每步完整响应保留，未知请求不重投，人工标注冲突不覆盖；不分析声音、不宣称完整视频理解。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "project": {
+          "type": "string",
+          "minLength": 1
+        },
+        "canvas": {
+          "type": "string",
+          "minLength": 1
+        },
+        "node_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "model_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "focus": {
+          "type": "string",
+          "maxLength": 2000
+        }
+      },
+      "required": [
+        "project",
+        "canvas",
+        "node_id",
+        "model_id"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "toonflow_image_variant",
+    "description": "按官方打光/多角度/全景纯合同，在原图旁创建合法生成草稿及原图连线；不自动生成、不渲染、不重绘。需成员授权图片输入模型，比例/尺寸必须明确支持，全景2:1或4:1不得降级。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "project": {
+          "type": "string",
+          "minLength": 1
+        },
+        "canvas": {
+          "type": "string",
+          "minLength": 1
+        },
+        "node_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "model_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ratio": {
+          "type": "string",
+          "minLength": 1
+        },
+        "size": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "enum": [
+            "lighting",
+            "multi-angle",
+            "panorama"
+          ]
+        },
+        "options": {
+          "type": "object",
+          "properties": {
+            "azimuth": {
+              "type": "number"
+            },
+            "elevation": {
+              "type": "number"
+            },
+            "brightness": {
+              "type": "number"
+            },
+            "lightColor": {
+              "type": "string",
+              "minLength": 1
+            },
+            "rimLight": {
+              "type": "boolean"
+            },
+            "rimAzimuth": {
+              "type": "number"
+            },
+            "rimElevation": {
+              "type": "number"
+            },
+            "rimBrightness": {
+              "type": "number"
+            },
+            "rimColor": {
+              "type": "string",
+              "minLength": 1
+            },
+            "preset": {
+              "type": "string"
+            },
+            "smartMode": {
+              "type": "boolean"
+            },
+            "smartDesc": {
+              "type": "string"
+            },
+            "distance": {
+              "type": "number"
+            },
+            "lens": {
+              "enum": [
+                "standard",
+                "wide"
+              ]
+            },
+            "viewMode": {
+              "enum": [
+                "orbit",
+                "camera"
+              ]
+            },
+            "mode": {
+              "enum": [
+                "sphere",
+                "cylinder"
+              ]
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "project",
+        "canvas",
+        "node_id",
+        "kind",
+        "model_id",
+        "options"
+      ],
+      "additionalProperties": false
+    }
+  }
+]

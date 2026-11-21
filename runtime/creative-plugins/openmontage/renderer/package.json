@@ -1,0 +1,13 @@
+{
+  "name": "greenroom-openmontage-renderer",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@revideo/2d": "0.11.0",
+    "@revideo/core": "0.11.0",
+    "@revideo/renderer": "0.11.0",
+    "@revideo/telemetry": "0.11.0",
+    "@revideo/ui": "0.11.0",
+    "@revideo/vite-plugin": "0.11.0"
+  }
+}

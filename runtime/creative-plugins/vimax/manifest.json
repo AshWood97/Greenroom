@@ -1,0 +1,22 @@
+{
+  "id": "vimax",
+  "title": "ViMax",
+  "group": "ai-drama-tools",
+  "kind": "app",
+  "upstream": "https://github.com/HKUDS/ViMax",
+  "revision": "fd4b72e7731be6e5f88486206d25ea59849b0285",
+  "license": "MIT",
+  "runtime": { "lifecycle": {"launcher":"python","readyPath":"/api/greenroom/lifecycle"},
+    "command": "/opt/vimax/.venv/bin/python",
+    "args": ["/opt/vimax/greenroom/server.py"],
+    "cwd": "/opt/vimax",
+    "port": 18810,
+    "env": {
+      "GREENROOM_PLUGIN_ROOT": "${ROOT}",
+      "GREENROOM_MANAGED_URL": "${BRIDGE_URL}",
+      "GREENROOM_BROKER_URL": "${BROKER_URL}",
+      "GREENROOM_BASE_PATH": "${BASE_PATH}"
+    }
+  },
+  "ui": { "basePath": "/plugins/vimax/", "upstreamPath": "/" }
+}

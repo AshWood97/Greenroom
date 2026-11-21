@@ -1,0 +1,15 @@
+{
+  "id": "shuohao-skills",
+  "title": "说好短剧Skills",
+  "group": "ai-drama-skills",
+  "kind": "skills",
+  "releaseBatch": "aigc-skills",
+  "upstream": "https://github.com/eternityspring/shuohao-skills",
+  "revision": "8af10e0ea1a550e4575666884f4deef780bf38ff",
+  "license": "Apache-2.0",
+  "runtime": null,
+  "ui": null,
+  "skillRoots": [
+    "skills"
+  ]
+}

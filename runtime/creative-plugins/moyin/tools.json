@@ -1,0 +1,600 @@
+[
+  {
+    "name": "moyin_projects",
+    "description": "列出原生魔因项目",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "moyin_create_project",
+    "description": "创建原生魔因项目",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "moyin_project",
+    "description": "读取项目的剧本、角色、场景、分镜和导演数据",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "projectId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "moyin_import_script",
+    "description": "后台导入完整剧本，复用魔因原生结构分析与入库",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "options": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "projectId",
+        "text"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "moyin_parse_script",
+    "description": "后台解析剧本，复用魔因原生分析与结构",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "options": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "projectId",
+        "text"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "moyin_generate_episode_shots",
+    "description": "后台生成分集分镜并保存原生工程",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "episodeIndex": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "options": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "projectId",
+        "episodeIndex"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "moyin_calibrate_shots",
+    "description": "后台校准分集分镜",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "episodeIndex": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "options": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "projectId",
+        "episodeIndex"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "moyin_calibrate_titles",
+    "description": "后台校准分集标题",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "options": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "projectId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "moyin_episode_synopses",
+    "description": "后台生成分集梗概",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "options": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "projectId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "moyin_update_shot",
+    "description": "修改原生分镜的创作字段",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "shotId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "changes": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "projectId",
+        "shotId",
+        "changes"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "moyin_update_character",
+    "description": "修改原生剧本角色字段",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "characterId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "changes": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "projectId",
+        "characterId",
+        "changes"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "moyin_update_scene",
+    "description": "修改原生剧本场景字段",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sceneId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "changes": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "projectId",
+        "sceneId",
+        "changes"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "moyin_shot_image",
+    "description": "后台生成指定分镜图片并回填原分镜",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "shotId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "config": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "projectId",
+        "shotId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "moyin_shot_video",
+    "description": "后台生成指定分镜视频并回填原分镜",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "shotId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "config": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "projectId",
+        "shotId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "moyin_generate_image",
+    "description": "后台生成参考图或自由创作图片，持久保存成员私有产物",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "prompt": {
+          "type": "string",
+          "minLength": 1
+        },
+        "options": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "projectId",
+        "prompt"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "moyin_generate_video",
+    "description": "后台生成视频，持久保存成员私有产物",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "prompt": {
+          "type": "string",
+          "minLength": 1
+        },
+        "options": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "projectId",
+        "prompt"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "moyin_tasks",
+    "description": "列出业务任务、逐项错误及私有产物",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "moyin_task",
+    "description": "读取既有任务状态和真实失败原因",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "taskId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "taskId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "moyin_resume",
+    "description": "恢复未完成的原业务任务和平台生成编号",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "moyin_angle_switch",
+    "description": "托管参考图视角重绘：不是RunningHub App，可能收费，模型必须支持参考图；只在用户要求生成后调用",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "referenceImage": {
+          "type": "string",
+          "minLength": 1
+        },
+        "direction": {
+          "type": "string",
+          "enum": [
+            "front",
+            "front-right-quarter",
+            "right-side",
+            "back-right-quarter",
+            "back",
+            "back-left-quarter",
+            "left-side",
+            "front-left-quarter"
+          ]
+        },
+        "elevation": {
+          "type": "string",
+          "enum": [
+            "low-angle",
+            "eye-level",
+            "elevated",
+            "high-angle"
+          ]
+        },
+        "shotSize": {
+          "type": "string",
+          "enum": [
+            "close-up",
+            "medium-shot",
+            "wide-shot"
+          ]
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "projectId",
+        "referenceImage",
+        "direction",
+        "elevation",
+        "shotSize"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "moyin_split_quad_grid",
+    "description": "仅切分既有四宫格图片，左上/右上/左下/右下，保存私有素材，不生成新图片",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "referenceImage": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "projectId",
+        "referenceImage"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "moyin_export_media",
+    "description": "原生项目/导演目录导出：媒体文件与manifest保存在成员私有目录，返回可下载链接；不是合片",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source": {
+          "type": "string",
+          "enum": [
+            "script",
+            "director"
+          ]
+        },
+        "includeImages": {
+          "type": "boolean"
+        },
+        "includeVideos": {
+          "type": "boolean"
+        },
+        "includeEndFrames": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "projectId",
+        "source"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "moyin_prepare_quad_grid",
+    "description": "只读准备原生四宫格完整提示词和角色参考，未生成、未上传，模型能力与效果待用户手动验证",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sceneId": {
+          "type": "integer"
+        },
+        "frameType": {
+          "type": "string",
+          "enum": [
+            "start",
+            "end"
+          ]
+        },
+        "variationType": {
+          "type": "string",
+          "enum": [
+            "angle",
+            "composition",
+            "moment"
+          ]
+        },
+        "useCharacterRef": {
+          "type": "boolean"
+        },
+        "model": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "projectId",
+        "sceneId",
+        "frameType",
+        "variationType"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "moyin_apply_quad_result",
+    "description": "将本项目已完成切分任务的指定图片应用到原生导演首尾帧，不上传成员Asset或调用模型",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sceneId": {
+          "type": "integer"
+        },
+        "frameType": {
+          "type": "string",
+          "enum": [
+            "start",
+            "end"
+          ]
+        },
+        "splitTaskId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "imageIndex": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3
+        }
+      },
+      "required": [
+        "projectId",
+        "sceneId",
+        "frameType",
+        "splitTaskId",
+        "imageIndex"
+      ],
+      "additionalProperties": false
+    }
+  }
+]

@@ -1,0 +1,13 @@
+{
+  "id": "lemo-opuscar",
+  "title": "Lemo-Opuscar",
+  "group": "ai-drama-skills",
+  "kind": "skills",
+  "upstream": "https://github.com/lemomo-ai/lemo-opuscar",
+  "revision": "143f387ad774525dc9abc0ff05fb5f4bfbaa5f02",
+  "license": "MIT; demo stills CC-BY-4.0",
+  "runtime": null,
+  "ui": null,
+  "skillRoots": ["lemo-opuscar"],
+  "knowledgeRoot": "/opt/creative-skills/lemo-opuscar/lemo-opuscar"
+}

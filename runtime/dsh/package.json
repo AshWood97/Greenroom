@@ -1,0 +1,10 @@
+{
+  "name": "greenroom-dsh-runtime",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@deepseek-ai/dsh": "0.2.2-rc.5",
+    "@modelcontextprotocol/sdk": "1.32.1",
+    "pnpm": "11.0.0"
+  }
+}
